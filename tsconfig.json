@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@palma/shared": ["packages/shared/src/index.ts"],
+      "@palma/biometrics": ["packages/biometrics/src/index.ts"],
+      "@palma/db": ["packages/db/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/shared/src/**/*.ts",
+    "packages/biometrics/src/**/*.ts",
+    "packages/db/src/**/*.ts",
+    "apps/api/src/**/*.ts",
+    "apps/cli/src/**/*.ts"
+  ]
+}

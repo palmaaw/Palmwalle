@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "baseUrl": "../..",
+    "paths": {
+      "@palma/shared": ["packages/shared/src/index.ts"],
+      "@palma/biometrics": ["packages/biometrics/src/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "../../packages/shared/src/**/*.ts",
+    "../../packages/biometrics/src/**/*.ts"
+  ]
+  // vite.config.ts is intentionally excluded: vitest's rolldown-vite and the
+  // app's vite resolve to different copies, so their plugin types clash.
+  // Vite transpiles its own config at runtime.
+
+}

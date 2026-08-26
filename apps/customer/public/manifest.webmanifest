@@ -1,0 +1,10 @@
+{
+  "name": "PalmPay (PROTOTYPE)",
+  "short_name": "PalmPay",
+  "description": "SIMULATED palm-payment wallet prototype. Not a real financial service.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07211f",
+  "theme_color": "#0b3d3a",
+  "icons": []
+}
