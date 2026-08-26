@@ -13,9 +13,9 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json && for d in apps/*/; do [ -f \"$d/tsconfig.json\" ] && tsc --noEmit -p \"$d\" || true; done",
-    "build": "npm run typecheck",
+    "build": "npm run typecheck && npm run build -w @palmwallet/customer && npm run build -w @palmwallet/merchant",
     "test": "vitest run",
-    "dev": "concurrently -n api,cust,pos -c blue,green,magenta \"DATABASE_PATH=$PWD/data/palm-wallet.db npm run dev -w @palmwallet/api\" \"npm run dev -w @palmwallet/customer\" \"npm run dev -w @palmwallet/merchant\"",
+    "dev": "concurrently --kill-others-on-fail -n api,cust,pos -c blue,green,magenta \"DATABASE_PATH=$PWD/data/palm-wallet.db npm run dev -w @palmwallet/api\" \"npm run dev -w @palmwallet/customer\" \"npm run dev -w @palmwallet/merchant\"",
     "dev:api": "DATABASE_PATH=$PWD/data/palm-wallet.db npm run dev -w @palmwallet/api",
     "seed": "tsx apps/cli/src/seed.ts",
     "smoke": "tsx apps/cli/src/smoke.ts",
