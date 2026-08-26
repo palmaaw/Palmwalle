@@ -25,6 +25,9 @@ interface Session {
   demoSlug: string;
   /** Device-visible protection subkey (memory-only); null until fetched. */
   protectionKey: Uint8Array | null;
+  /** True while a stored token's session is still being restored on load —
+   *  routers must not treat "customer === null" as signed-out during this. */
+  booting: boolean;
   signIn(token: string, customer: CustomerDTO): void;
   setCustomer(customer: CustomerDTO): void;
   signOut(): void;
@@ -36,6 +39,8 @@ const Ctx = createContext<Session | null>(null);
 export function SessionProvider({ children }: { children: ReactNode }): JSX.Element {
   const [customer, setCustomerState] = useState<CustomerDTO | null>(null);
   const [protectionKey, setProtectionKey] = useState<Uint8Array | null>(null);
+  // Lazily initialized so a stored token never renders as "signed out" first.
+  const [booting, setBooting] = useState<boolean>(() => !!localStorage.getItem('palmwallet.token'));
 
   const loadProtectionKey = useCallback((): void => {
     api
@@ -53,7 +58,8 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
         setCustomerState(d.customer);
         loadProtectionKey();
       })
-      .catch(() => setToken(null));
+      .catch(() => setToken(null))
+      .finally(() => setBooting(false));
   }, [loadProtectionKey]);
 
   const signIn = useCallback(
@@ -74,6 +80,7 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
       customer,
       demoSlug,
       protectionKey,
+      booting,
       signIn,
       setCustomer: setCustomerState,
       signOut: () => {
@@ -91,7 +98,7 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
         }
       }
     }),
-    [customer, demoSlug, protectionKey, signIn]
+    [customer, demoSlug, protectionKey, booting, signIn]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

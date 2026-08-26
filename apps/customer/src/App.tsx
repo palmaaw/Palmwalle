@@ -12,9 +12,22 @@ import { History, Receipt } from './screens/History.js';
 import { Settings } from './screens/Settings.js';
 
 export function App(): JSX.Element {
-  const { customer } = useSession();
+  const { customer, booting } = useSession();
 
   const guarded = (el: JSX.Element): JSX.Element => (customer ? el : <Navigate to="/" replace />);
+
+  // Hold all routes (and their auth redirects) until a stored session has been
+  // restored — otherwise a refresh flashes the Welcome page before me() lands.
+  if (booting) {
+    return (
+      <div className="phone">
+        <div className="prototype-strip">SIMULATED PROTOTYPE — demo biometrics · no real money</div>
+        <div className="screen center-screen">
+          <p className="muted">Restoring your session…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="phone">

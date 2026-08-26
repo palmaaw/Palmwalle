@@ -25,6 +25,9 @@ interface PosSession {
   merchant: MerchantDTO | null;
   /** Device-visible protection subkey (memory-only); null until fetched. */
   protectionKey: Uint8Array | null;
+  /** True while a stored token's session is still being restored on load —
+   *  routers must not treat "merchant === null" as signed-out during this. */
+  booting: boolean;
   signIn(token: string, m: MerchantDTO): void;
   signOut(): void;
 }
@@ -34,6 +37,8 @@ const Ctx = createContext<PosSession | null>(null);
 export function PosProvider({ children }: { children: ReactNode }): JSX.Element {
   const [merchant, setMerchant] = useState<MerchantDTO | null>(null);
   const [protectionKey, setProtectionKey] = useState<Uint8Array | null>(null);
+  // Lazily initialized so a stored token never renders as "signed out" first.
+  const [booting, setBooting] = useState<boolean>(() => !!localStorage.getItem('palm-wallet.pos.token'));
 
   const loadProtectionKey = useCallback((): void => {
     api
@@ -50,13 +55,15 @@ export function PosProvider({ children }: { children: ReactNode }): JSX.Element 
         setMerchant(d.merchant);
         loadProtectionKey();
       })
-      .catch(() => setToken(null));
+      .catch(() => setToken(null))
+      .finally(() => setBooting(false));
   }, [loadProtectionKey]);
 
   const value = useMemo<PosSession>(
     () => ({
       merchant,
       protectionKey,
+      booting,
       signIn: (token, m) => {
         setToken(token);
         setMerchant(m);
@@ -68,7 +75,7 @@ export function PosProvider({ children }: { children: ReactNode }): JSX.Element 
         setProtectionKey(null);
       }
     }),
-    [merchant, protectionKey, loadProtectionKey]
+    [merchant, protectionKey, booting, loadProtectionKey]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
