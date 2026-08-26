@@ -1,7 +1,7 @@
 /// <reference types="node" />
 // Tests run under Node (vitest); Buffer is fine HERE — src/ stays runtime-neutral.
 import { describe, expect, it } from 'vitest';
-import { ENROLL_CONSISTENCY_FLOOR, MATCH_GREY_FLOOR, MATCH_THRESHOLD } from '@palma/shared';
+import { ENROLL_CONSISTENCY_FLOOR, MATCH_GREY_FLOOR, MATCH_THRESHOLD } from '@palmwallet/shared';
 import {
   InMemoryTemplateStore,
   SyntheticCaptureSource,

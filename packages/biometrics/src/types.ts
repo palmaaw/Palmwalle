@@ -9,7 +9,7 @@
  * biometric SDK before any production use.
  */
 
-import type { PalmCodeDTO, QualityHint, QualityReportDTO } from '@palma/shared';
+import type { PalmCodeDTO, QualityHint, QualityReportDTO } from '@palmwallet/shared';
 
 /** Single-channel image, values in [0,1]. */
 export interface GrayImage {
@@ -71,7 +71,7 @@ export interface BestMatchResult extends ScoreResult {
   runnerUp?: { subjectId: string; similarity: number };
 }
 
-/** Storage seam implemented by @palma/db (sqlite) or in-memory (tests). */
+/** Storage seam implemented by @palmwallet/db (sqlite) or in-memory (tests). */
 export interface TemplateStoreRow {
   templateId: string;
   subjectType: string;

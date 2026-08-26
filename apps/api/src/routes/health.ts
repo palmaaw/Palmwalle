@@ -1,4 +1,4 @@
-import { ALGO_ID, ALGO_VERSION, MATCH_GREY_FLOOR, MATCH_THRESHOLD, TEMPLATE_BITS } from '@palma/shared';
+import { ALGO_ID, ALGO_VERSION, MATCH_GREY_FLOOR, MATCH_THRESHOLD, TEMPLATE_BITS } from '@palmwallet/shared';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../container.js';
 
@@ -27,7 +27,7 @@ export function healthRoutes(app: FastifyInstance, ctx: AppContext): void {
   app.get('/api/v1/meta', async () => ({
     ok: true,
     data: {
-      service: 'palmpay',
+      service: 'palm-wallet',
       prototype: true,
       currency: 'EGP',
       biometrics: {

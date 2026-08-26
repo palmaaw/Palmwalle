@@ -1,5 +1,5 @@
 {
-  "name": "@palma/db",
+  "name": "@palmwallet/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@palma/biometrics": "*",
-    "@palma/shared": "*"
+    "@palmwallet/biometrics": "*",
+    "@palmwallet/shared": "*"
   }
 }

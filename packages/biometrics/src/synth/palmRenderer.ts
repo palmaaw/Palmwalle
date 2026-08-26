@@ -1,6 +1,6 @@
 /**
  * SIMULATED capture source: procedural "palm" images derived deterministically
- * from an identity seed. This is what makes PalmPay demonstrable and testable in
+ * from an identity seed. This is what makes Palm Wallet demonstrable and testable in
  * environments with no camera (CI, cloud workspaces) — it is NOT a biometric
  * sensor and produces no personally meaningful data.
  *
@@ -13,7 +13,7 @@ import { rngFromString, type Rng } from '../prng.js';
 
 /** Canonical seed for a demo identity slug — THE shared contract between apps/seeder/tests. */
 export function demoSeed(identitySlug: string): string {
-  return `palma-demo-v1:${identitySlug}`;
+  return `palm-wallet-demo-v1:${identitySlug}`;
 }
 
 export interface RenderOptions {

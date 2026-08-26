@@ -7,7 +7,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
-import { ApiError, httpStatusFor } from '@palma/shared';
+import { ApiError, httpStatusFor } from '@palmwallet/shared';
 
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((err, req, reply) => {

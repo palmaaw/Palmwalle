@@ -8,7 +8,7 @@
  * rest. A certified SDK replaces all of this. See docs/BIOMETRICS.md.
  */
 
-import { DESCRIPTOR_DIM, TEMPLATE_BITS } from '@palma/shared';
+import { DESCRIPTOR_DIM, TEMPLATE_BITS } from '@palmwallet/shared';
 import { rngFromBytes } from '../prng.js';
 
 const DIM = DESCRIPTOR_DIM;

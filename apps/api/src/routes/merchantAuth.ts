@@ -2,14 +2,14 @@
  * Merchant bootstrap (guarded by X-Setup-Token) + login + profile/wallet.
  */
 
-import { ApiError } from '@palma/shared';
-import { LimitSchema, MerchantLoginSchema, RegisterMerchantSchema } from '@palma/shared';
+import { ApiError } from '@palmwallet/shared';
+import { LimitSchema, MerchantLoginSchema, RegisterMerchantSchema } from '@palmwallet/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppContext } from '../container.js';
 import { merchantDTO, walletDTO } from '../dto.js';
 import { isUniqueViolation, parseBody, parseQuery } from '../lib.js';
-import { hashPin, verifyPin } from '../security/passwordHash.js';
+import { hashPassword, verifyPassword } from '../security/passwordHash.js';
 import { mapHistory } from './history.js';
 
 const HistoryQuerySchema = z.object({ cursor: z.string().max(256).optional(), limit: LimitSchema.optional() });
@@ -29,7 +29,7 @@ export function merchantAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
         code: body.code,
         name: body.displayName ?? body.name,
         phone: body.phone,
-        pinHash: await hashPin(body.pin)
+        passwordHash: hashPassword(body.password)
       });
     } catch (err) {
       if (isUniqueViolation(err)) throw new ApiError('ACCOUNT_EXISTS', 'Merchant code or phone already registered');
@@ -61,8 +61,8 @@ export function merchantAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
     const row = /^[A-Z0-9-]{3,24}$/.test(body.identifier)
       ? ctx.repos.merchants.getByCode(body.identifier)
       : ctx.repos.merchants.getByPhone(body.identifier);
-    const okPin = row ? await verifyPin(body.pin, row.pinHash) : false;
-    if (!row || !okPin) {
+    const okPassword = row ? verifyPassword(body.password, row.passwordHash) : false;
+    if (!row || !okPassword) {
       ctx.throttle.recordFailure(throttleKey);
       ctx.repos.audit.append({ actorType: 'merchant', actorId: body.identifier, event: 'auth.login', outcome: 'rejected' });
       throw new ApiError('AUTH_INVALID_CREDENTIALS', 'Wrong credentials');

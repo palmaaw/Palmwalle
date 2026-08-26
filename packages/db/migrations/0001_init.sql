@@ -1,4 +1,4 @@
--- PalmPay PROTOTYPE schema — simulated wallet ledger + biometric template storage.
+-- Palm Wallet PROTOTYPE schema — simulated wallet ledger + biometric template storage.
 -- Money is integer piasters (1 EGP = 100). Timestamps are UTC ISO-8601 strings.
 -- This is NOT a production financial database; see docs/LEDGER.md.
 

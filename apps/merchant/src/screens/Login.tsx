@@ -12,7 +12,7 @@ export function Login(): JSX.Element {
   const { signIn } = usePos();
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState('ZAMALEK-COFFEE');
-  const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +20,7 @@ export function Login(): JSX.Element {
   const [bName, setBName] = useState('');
   const [bCode, setBCode] = useState('');
   const [bPhone, setBPhone] = useState('');
-  const [bPin, setBPin] = useState('');
+  const [bPassword, setBPassword] = useState('');
   const [bToken, setBToken] = useState('');
 
   async function login(e: React.FormEvent): Promise<void> {
@@ -28,7 +28,7 @@ export function Login(): JSX.Element {
     setError(null);
     setBusy(true);
     try {
-      const d = await api.login(identifier.trim(), pin);
+      const d = await api.login(identifier.trim(), password);
       signIn(d.accessToken, d.merchant);
       navigate('/pos', { replace: true });
     } catch (err) {
@@ -43,7 +43,7 @@ export function Login(): JSX.Element {
     setError(null);
     setBusy(true);
     try {
-      const d = await api.registerMerchant(bToken.trim(), bName.trim(), bCode.trim().toUpperCase(), bPhone.trim(), bPin);
+      const d = await api.registerMerchant(bToken.trim(), bName.trim(), bCode.trim().toUpperCase(), bPhone.trim(), bPassword);
       signIn(d.accessToken, d.merchant);
       navigate('/pos', { replace: true });
     } catch (err) {
@@ -57,7 +57,7 @@ export function Login(): JSX.Element {
     <div className="pos-login">
       <div className="hero">
         <h1>
-          Palm<span>Pay</span> <em>POS</em>
+          Palm<span>Wallet</span> <em>POS</em>
         </h1>
         <p className="prototype-banner">⚠️ SIMULATED PROTOTYPE — demo biometrics · no real money</p>
       </div>
@@ -69,8 +69,14 @@ export function Login(): JSX.Element {
           <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="ZAMALEK-COFFEE" />
         </label>
         <label>
-          PIN
-          <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} type="password" inputMode="numeric" placeholder="2468 for the demo shop" />
+          Password
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value.slice(0, 128))}
+            type="password"
+            autoComplete="current-password"
+            placeholder="shop2468 for the demo shop"
+          />
         </label>
         {error ? <div className="callout warn">{error}</div> : null}
         <button className="primary" disabled={busy}>
@@ -90,7 +96,7 @@ export function Login(): JSX.Element {
           </p>
           <label>
             Setup token
-            <input value={bToken} onChange={(e) => setBToken(e.target.value)} placeholder="palma-dev-setup" />
+            <input value={bToken} onChange={(e) => setBToken(e.target.value)} placeholder="palm-wallet-dev-setup" />
           </label>
           <label>
             Shop name
@@ -105,8 +111,13 @@ export function Login(): JSX.Element {
             <input value={bPhone} onChange={(e) => setBPhone(e.target.value)} placeholder="+201200000001" inputMode="tel" />
           </label>
           <label>
-            PIN (4–6 digits)
-            <input value={bPin} onChange={(e) => setBPin(e.target.value.replace(/\D/g, '').slice(0, 6))} type="password" inputMode="numeric" />
+            Password (min 6 characters)
+            <input
+              value={bPassword}
+              onChange={(e) => setBPassword(e.target.value.slice(0, 128))}
+              type="password"
+              autoComplete="new-password"
+            />
           </label>
           <button className="primary" disabled={busy}>
             Create & open till

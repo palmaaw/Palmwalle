@@ -1,34 +1,34 @@
 /**
- * Standalone integrity report for a PalmPay database: re-derives ledger
+ * Standalone integrity report for a Palm Wallet database: re-derives ledger
  * balances, checks the double-entry invariants, and walks the audit hash
  * chain. Run against the live path after any suspicious activity — or before
  * a demo, to prove the books still balance.
  *
- * Usage: npm run audit:verify   (DATABASE_PATH env or ./data/palma.db)
+ * Usage: npm run audit:verify   (DATABASE_PATH env or ./data/palm-wallet.db)
  */
 
-import { AuditRepo, PalmaDatabase, collectInvariants } from '@palma/db';
+import { AuditRepo, PalmWalletDatabase, collectInvariants } from '@palmwallet/db';
 
 function egp(piasters: number): string {
   return `EGP ${(piasters / 100).toLocaleString('en-EG', { minimumFractionDigits: 2 })}`;
 }
 
 async function main(): Promise<void> {
-  const path = process.env.DATABASE_PATH ?? './data/palma.db';
+  const path = process.env.DATABASE_PATH ?? './data/palm-wallet.db';
   if (path === ':memory:') {
     console.error('refusing to verify :memory: — set DATABASE_PATH to a real file');
     process.exit(1);
   }
 
-  let db: PalmaDatabase;
+  let db: PalmWalletDatabase;
   try {
-    db = new PalmaDatabase(path);
+    db = new PalmWalletDatabase(path);
   } catch (err) {
     console.error(`cannot open ${path}:`, err instanceof Error ? err.message : err);
     process.exit(1);
   }
 
-  console.log(`PalmPay integrity report — ${path}\n`);
+  console.log(`Palm Wallet integrity report — ${path}\n`);
   let failures = 0;
 
   const report = collectInvariants(db);

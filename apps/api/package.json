@@ -1,5 +1,5 @@
 {
-  "name": "@palma/api",
+  "name": "@palmwallet/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,9 +11,9 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@palma/biometrics": "*",
-    "@palma/db": "*",
-    "@palma/shared": "*",
+    "@palmwallet/biometrics": "*",
+    "@palmwallet/db": "*",
+    "@palmwallet/shared": "*",
     "@fastify/cors": "^11.0.0",
     "fastify": "^5.2.0",
     "jose": "^6.0.0",

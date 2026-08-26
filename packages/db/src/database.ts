@@ -1,5 +1,5 @@
 /**
- * PalmaDatabase — the ONLY module in PalmPay that touches node:sqlite.
+ * PalmWalletDatabase — the ONLY module in Palm Wallet that touches node:sqlite.
  *
  * Why a wrapper: node:sqlite's DatabaseSync has no `.transaction()` helper, and
  * SQLite allows only one writer at a time. `withTransaction()` below replaces the
@@ -18,7 +18,7 @@
 
 import { DatabaseSync, type StatementSync } from 'node:sqlite';
 
-export class PalmaDatabase {
+export class PalmWalletDatabase {
   readonly raw: DatabaseSync;
   private depth = 0;
   private readonly stmtCache = new Map<string, StatementSync>();
@@ -58,7 +58,7 @@ export class PalmaDatabase {
    * request). An async callback is REJECTED outright: awaiting anything inside a
    * transaction would hold the write lock across the await and let unrelated
    * requests interleave into the same SQLite transaction. All persistence work
-   * in PalmPay is synchronous node:sqlite I/O, so nothing legitimate needs it —
+   * in Palm Wallet is synchronous node:sqlite I/O, so nothing legitimate needs it —
    * biometric matching and other async steps run BEFORE opening the transaction.
    */
   withTransaction<T>(fn: () => T): T {

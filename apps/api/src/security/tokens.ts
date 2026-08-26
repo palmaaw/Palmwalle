@@ -28,13 +28,13 @@ export class TokenService {
       .setProtectedHeader({ alg: 'HS256' })
       .setSubject(claims.sub)
       .setIssuedAt()
-      .setIssuer('palmpay-prototype')
+      .setIssuer('palm-wallet-prototype')
       .setExpirationTime(`${this.ttlSeconds}s`)
       .sign(this.secret);
   }
 
   async verify(token: string): Promise<SessionClaims> {
-    const { payload } = await jwtVerify(token, this.secret, { issuer: 'palmpay-prototype' });
+    const { payload } = await jwtVerify(token, this.secret, { issuer: 'palm-wallet-prototype' });
     const typ = payload['typ'];
     if (typ !== 'customer' && typ !== 'merchant') throw new Error('bad token type');
     return {

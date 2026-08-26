@@ -1,4 +1,4 @@
-# PalmPay — pay with a wave 🖐️
+# Palm Wallet — pay with a wave 🖐️
 
 A **palm-biometric payment prototype for Egypt**: enroll your palm from your phone,
 then pay at a merchant counter by holding your palm over the reader — no card, no
@@ -26,20 +26,20 @@ cash, no phone at the till.
 
 | Piece | Where | What it does |
 |---|---|---|
-| `@palma/shared` | `packages/shared` | Money as integer piasters, zod wire schemas (single source of truth), error codes, thresholds |
-| `@palma/biometrics` | `packages/biometrics` | SIMULATED palm pipeline: synthetic capture → quality → HOG descriptors → **on-device one-way 1024-bit codes** → sealed storage + Hamming matching. Runs identically in browser & Node |
-| `@palma/db` | `packages/db` | SQLite persistence: checksummed migrations, SQL-enforced ledger invariants, hash-chained audit log |
-| `@palma/api` | `apps/api` | Fastify API: auth, enrollment, wallets, one-step scan-&-pay, refunds, replay protection |
-| `@palma/customer` | `apps/customer` | Customer PWA (`:5173`): register → enroll palm by camera (or demo palms) → wallet → history → receipts |
-| `@palma/merchant` | `apps/merchant` | POS PWA (`:5174`): amount keypad → scan customer palm → instant settle → refunds |
-| `@palma/cli` | `apps/cli` | Seeder, smoke test, headless E2E over real HTTP, audit verifier |
+| `@palmwallet/shared` | `packages/shared` | Money as integer piasters, zod wire schemas (single source of truth), error codes, thresholds |
+| `@palmwallet/biometrics` | `packages/biometrics` | SIMULATED palm pipeline: synthetic capture → quality → HOG descriptors → **on-device one-way 1024-bit codes** → sealed storage + Hamming matching. Runs identically in browser & Node |
+| `@palmwallet/db` | `packages/db` | SQLite persistence: checksummed migrations, SQL-enforced ledger invariants, hash-chained audit log |
+| `@palmwallet/api` | `apps/api` | Fastify API: auth, enrollment, wallets, one-step scan-&-pay, refunds, replay protection |
+| `@palmwallet/customer` | `apps/customer` | Customer PWA (`:5173`): register → enroll palm by camera (or demo palms) → wallet → history → receipts |
+| `@palmwallet/merchant` | `apps/merchant` | POS PWA (`:5174`): amount keypad → scan customer palm → instant settle → refunds |
+| `@palmwallet/cli` | `apps/cli` | Seeder, smoke test, headless E2E over real HTTP, audit verifier |
 
 ## Quick start
 
 ```bash
 npm install
 
-npm run seed        # create ./data/palma.db with demo identities (idempotent)
+npm run seed        # create ./data/palm-wallet.db with demo identities (idempotent)
 npm run dev         # run all three: api :8787 · customer :5173 · pos :5174
 ```
 
@@ -48,22 +48,25 @@ Open the forwarded URLs:
 1. **Customer app** — sign in as a seeded customer (below). Your demo palm is
    already enrolled. Top up the wallet via the simulated InstaPay/Vodafone Cash
    sheet.
-2. **POS app** — sign in as the demo shop. Enter an amount, pick who's paying on
-   the SIMULATED reader (or "Stranger" to watch it get rejected), and the payment
-   settles atomically.
+2. **POS app** — sign in as the demo shop. Enter an amount and hit **Scan palm**:
+   the till is identity-blind — the SIMULATED reader presents *some* palm, the
+   device turns it into a one-way code, and the server identifies it against all
+   enrolled templates. The customer's name appears only in the outcome.
 
 ### Demo credentials
 
-| Role | Login | PIN | Wallet |
+| Role | Login | Password | Wallet |
 |---|---|---|---|
-| Customer | `+201000000001` (Aya) | `1234` | EGP 2,500 |
-| Customer | `+201000000002` (Omar) | `1234` | EGP 800 |
-| Customer | `+201000000003` (Nour) | `1234` | EGP 0 — insufficient-funds demo |
-| Merchant POS | `ZAMALEK-COFFEE` | `2468` | EGP 5,000 |
+| Customer | `+201000000001` (Aya) | `demo1234` | EGP 2,500 |
+| Customer | `+201000000002` (Omar) | `demo1234` | EGP 800 |
+| Customer | `+201000000003` (Nour) | `demo1234` | EGP 0 — insufficient-funds demo |
+| Merchant POS | `ZAMALEK-COFFEE` | `shop2468` | EGP 5,000 |
 
-Registering more merchants (dev only) needs the setup token `palma-dev-setup`
+Passwords are minimum 6 characters, stored server-side only as SHA-256 hashes.
+
+Registering more merchants (dev only) needs the setup token `palm-wallet-dev-setup`
 (override with `DEV_SETUP_TOKEN`). Dev diagnostics endpoints need
-`x-dev-token: palma-dev`.
+`x-dev-token: palm-wallet-dev`.
 
 ## Prove it works without a browser
 
@@ -89,7 +92,7 @@ are stable. **Never use those values anywhere real** — set `JWT_SECRET` and
 `TEMPLATE_MASTER_KEY` explicitly instead. Production mode refuses to boot without
 them.
 
-The root `dev`/`dev:api` scripts pin `DATABASE_PATH` to `<repo>/data/palma.db`
+The root `dev`/`dev:api` scripts pin `DATABASE_PATH` to `<repo>/data/palm-wallet.db`
 (absolute) because npm runs workspace scripts with the workspace as cwd — this
 keeps seed, dev, and `audit:verify` on one database file no matter how you launch
 them.
@@ -103,7 +106,7 @@ them.
 
 ## Before this could ever be production
 
-1. Replace `@palma/biometrics` with a **certified palm SDK** (hardware reader or
+1. Replace `@palmwallet/biometrics` with a **certified palm SDK** (hardware reader or
    certified phone-vendor stack) behind the same `BiometricService` interface.
 2. Replace the sim adapters in `apps/api/src/providers/` with licensed
    InstaPay / Vodafone Cash integrations under PSP agreements.

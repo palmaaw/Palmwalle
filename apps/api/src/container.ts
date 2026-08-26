@@ -3,9 +3,9 @@
  * from config. Everything the routes need hangs off AppContext — no globals.
  */
 
-import { createBiometricService, deriveRuntimeKeys } from '@palma/biometrics';
-import type { BiometricService } from '@palma/biometrics';
-import { AccountRepo, AuditRepo, CustomerRepo, IdempotencyRepo, LedgerRepo, MerchantRepo, PalmaDatabase, SqliteTemplateStore, TransactionRepo, runMigrations } from '@palma/db';
+import { createBiometricService, deriveRuntimeKeys } from '@palmwallet/biometrics';
+import type { BiometricService } from '@palmwallet/biometrics';
+import { AccountRepo, AuditRepo, CustomerRepo, IdempotencyRepo, LedgerRepo, MerchantRepo, PalmWalletDatabase, SqliteTemplateStore, TransactionRepo, runMigrations } from '@palmwallet/db';
 import type { AuthHooks } from './plugins/auth.js';
 import { authHooks } from './plugins/auth.js';
 
@@ -19,7 +19,7 @@ import { ProviderRegistry } from './providers/registry.js';
 
 export interface AppContext {
   config: AppConfig;
-  db: PalmaDatabase;
+  db: PalmWalletDatabase;
   repos: {
     customers: CustomerRepo;
     merchants: MerchantRepo;
@@ -42,7 +42,7 @@ export interface AppContext {
 }
 
 export async function buildContext(config: AppConfig): Promise<AppContext> {
-  const db = new PalmaDatabase(config.databasePath);
+  const db = new PalmWalletDatabase(config.databasePath);
   runMigrations(db);
 
   const repos = {

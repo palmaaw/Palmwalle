@@ -1,4 +1,4 @@
-# Biometrics — how PalmPay handles your palm (SIMULATED)
+# Biometrics — how Palm Wallet handles your palm (SIMULATED)
 
 > ⚠️ **Everything in this document describes a PROTOTYPE-GRADE, SIMULATED
 > pipeline.** It demonstrates the *shape* of a correct palm-payment system:

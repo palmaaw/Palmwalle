@@ -5,8 +5,8 @@
  * leaves the device in any reversible form.
  */
 
-import { ALGO_ID, TEMPLATE_BITS } from '@palma/shared';
-import type { PalmCodeDTO as PalmCodeWire } from '@palma/shared';
+import { ALGO_ID, TEMPLATE_BITS } from '@palmwallet/shared';
+import type { PalmCodeDTO as PalmCodeWire } from '@palmwallet/shared';
 import { cosine, combineVectors } from './combine.js';
 import { protectVector } from './protect/protector.js';
 import { encodeCode } from './codes.js';

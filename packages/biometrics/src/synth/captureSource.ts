@@ -2,7 +2,7 @@
  * Frame-stream generator over the synthetic renderer — stands in for a camera.
  */
 
-import { ENROLL_FRAMES_REQUIRED, PROBE_FRAMES_REQUIRED } from '@palma/shared';
+import { ENROLL_FRAMES_REQUIRED, PROBE_FRAMES_REQUIRED } from '@palmwallet/shared';
 import { demoSeed, renderSyntheticPalm, type RenderedPalm, type RenderOptions } from './palmRenderer.js';
 
 export { demoSeed };

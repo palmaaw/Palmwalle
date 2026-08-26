@@ -4,7 +4,7 @@
  * Sequence (throttle -> freshness -> idempotency -> biometric 1:N -> wallet
  * state -> double-entry settlement) with a deliberate split: the ASYNC
  * biometric match happens BEFORE the synchronous SQLite transaction, so no
- * await ever sits inside BEGIN IMMEDIATE (see PalmaDatabase.withTransaction).
+ * await ever sits inside BEGIN IMMEDIATE (see PalmWalletDatabase.withTransaction).
  *
  * SECURITY NOTES:
  *  - The probe arrives as an ALREADY-PROTECTED 1024-bit code (device-side
@@ -24,12 +24,12 @@
  * HOG pipeline behind a swappable interface.
  */
 
-import { ApiError, formatEGP, isFresh } from '@palma/shared';
-import type { AuthorizePaymentDTO } from '@palma/shared';
-import type { CustomerRow, MerchantRow } from '@palma/db';
-import { CustomerRepo } from '@palma/db';
-import type { BestMatchResult, BiometricService } from '@palma/biometrics';
-import { decodeCode } from '@palma/biometrics';
+import { ApiError, formatEGP, isFresh } from '@palmwallet/shared';
+import type { AuthorizePaymentDTO } from '@palmwallet/shared';
+import type { CustomerRow, MerchantRow } from '@palmwallet/db';
+import { CustomerRepo } from '@palmwallet/db';
+import type { BestMatchResult, BiometricService } from '@palmwallet/biometrics';
+import { decodeCode } from '@palmwallet/biometrics';
 import { maskPhone } from '../dto.js';
 import type { ProbeThrottle } from '../security/throttle.js';
 import type { LedgerService } from './ledgerService.js';
@@ -59,7 +59,7 @@ function matchInfoOf(m: BestMatchResult): MatchWireInfo {
     outcome: m.decision,
     similarityBand: bandOf(m),
     threshold: m.threshold,
-    algoId: 'palma-sim-hog-v1'
+    algoId: 'palmwallet-sim-hog-v1'
   };
 }
 

@@ -1,5 +1,5 @@
-import { ApiError } from '@palma/shared';
-import type { DepositSource } from '@palma/shared';
+import { ApiError } from '@palmwallet/shared';
+import type { DepositSource } from '@palmwallet/shared';
 import type { PaymentProviderAdapter } from './types.js';
 
 /**

@@ -8,7 +8,7 @@ export interface CustomerRow {
   id: string;
   phone: string;
   name: string;
-  pinHash: string;
+  passwordHash: string;
   status: 'active' | 'disabled';
   createdAt: string;
   updatedAt: string;
@@ -19,7 +19,7 @@ export interface MerchantRow {
   code: string;
   name: string;
   phone: string;
-  pinHash: string;
+  passwordHash: string;
   status: 'active' | 'disabled';
   createdAt: string;
   updatedAt: string;

@@ -1,5 +1,5 @@
 /**
- * PalmPay API — PROTOTYPE entrypoint (the actual process).
+ * Palm Wallet API — PROTOTYPE entrypoint (the actual process).
  * ⚠️ Simulated wallet + simulated biometrics. No real financial transfers.
  */
 
@@ -27,6 +27,6 @@ async function main(): Promise<void> {
 
 main().catch((err) => {
   // eslint-disable-next-line no-console -- pre-logger failure path
-  console.error('[palma] fatal:', err instanceof Error ? err.message : err);
+  console.error('[palm-wallet] fatal:', err instanceof Error ? err.message : err);
   process.exit(1);
 });

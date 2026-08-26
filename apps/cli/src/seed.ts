@@ -6,14 +6,14 @@
  * from SyntheticCaptureSource — the same generator the apps use in dev mode.
  *
  * Demo identities are the cross-app contract (demoSeed slugs):
- *   aya / omar / nour  → customers, PIN 1234
- *   ZAMALEK-COFFEE     → merchant, PIN 2468
+ *   aya / omar / nour  → customers, password demo1234
+ *   ZAMALEK-COFFEE     → merchant, password shop2468
  */
 
-import { buildContext, hashPin, loadConfig } from '@palma/api';
-import { newHumanRef, newId } from '@palma/shared';
-import { buildEnrollmentCode, decodeCode } from '@palma/biometrics';
-import type { WalletAccountRow } from '@palma/db';
+import { buildContext, hashPassword, loadConfig } from '@palmwallet/api';
+import { newHumanRef, newId } from '@palmwallet/shared';
+import { buildEnrollmentCode, decodeCode } from '@palmwallet/biometrics';
+import type { WalletAccountRow } from '@palmwallet/db';
 
 import { DEMO_QUALITY, enrollmentFrames, protectionKeyOf } from './lib.js';
 
@@ -21,15 +21,15 @@ const MERCHANT = {
   code: 'ZAMALEK-COFFEE',
   name: 'Zamalek Coffee',
   phone: '+201200000001',
-  pin: '2468',
+  password: 'shop2468',
   targetPiasters: 500_000
 };
 
 const CUSTOMERS = [
-  { slug: 'aya', name: 'Aya Hassan', phone: '+201000000001', pin: '1234', targetPiasters: 250_000 },
-  { slug: 'omar', name: 'Omar Khaled', phone: '+201000000002', pin: '1234', targetPiasters: 80_000 },
+  { slug: 'aya', name: 'Aya Hassan', phone: '+201000000001', password: 'demo1234', targetPiasters: 250_000 },
+  { slug: 'omar', name: 'Omar Khaled', phone: '+201000000002', password: 'demo1234', targetPiasters: 80_000 },
   // Nour intentionally starts at ZERO for the insufficient-funds demo.
-  { slug: 'nour', name: 'Nour Adel', phone: '+201000000003', pin: '1234', targetPiasters: 0 }
+  { slug: 'nour', name: 'Nour Adel', phone: '+201000000003', password: 'demo1234', targetPiasters: 0 }
 ];
 
 function egp(piasters: number): string {
@@ -92,7 +92,7 @@ async function main(): Promise<void> {
       code: MERCHANT.code,
       name: MERCHANT.name,
       phone: MERCHANT.phone,
-      pinHash: await hashPin(MERCHANT.pin)
+      passwordHash: hashPassword(MERCHANT.password)
     });
     ctx.repos.accounts.ensureForOwner({ ownerType: 'merchant', ownerId: id });
     ctx.repos.audit.append({
@@ -113,7 +113,7 @@ async function main(): Promise<void> {
     let c = ctx.repos.customers.getByPhone(demo.phone);
     if (!c) {
       const id = newId();
-      ctx.repos.customers.insert({ id, phone: demo.phone, name: demo.name, pinHash: await hashPin(demo.pin) });
+      ctx.repos.customers.insert({ id, phone: demo.phone, name: demo.name, passwordHash: hashPassword(demo.password) });
       ctx.repos.accounts.ensureForOwner({ ownerType: 'customer', ownerId: id });
       ctx.repos.audit.append({
         actorType: 'system',
@@ -153,14 +153,14 @@ async function main(): Promise<void> {
       enrolled = true;
     }
     const balance = ctx.repos.accounts.getById(account.id)!.balancePiasters;
-    console.log(`seeded ${demo.name.padEnd(12)} ${demo.phone}  PIN ${demo.pin}  ${egp(balance).padStart(14)}  palm=${enrolled ? 'enrolled' : 'MISSING'}`);
+    console.log(`seeded ${demo.name.padEnd(12)} ${demo.phone}  password ${demo.password}  ${egp(balance).padStart(14)}  palm=${enrolled ? 'enrolled' : 'MISSING'}`);
   }
 
   const merchBalance = ctx.repos.accounts.getById(merchAccount.id)!.balancePiasters;
-  console.log(`seeded ${MERCHANT.name.padEnd(12)} ${MERCHANT.code}  PIN ${MERCHANT.pin}  ${egp(merchBalance).padStart(14)}  (POS)`);
+  console.log(`seeded ${MERCHANT.name.padEnd(12)} ${MERCHANT.code}  password ${MERCHANT.password}  ${egp(merchBalance).padStart(14)}  (POS)`);
 
   console.log('\n⚠️  SIMULATED PROTOTYPE — no real financial rails, simulated biometrics.');
-  console.log(`   API: http://localhost:${config.port}   POS login: ${MERCHANT.code} / ${MERCHANT.pin}`);
+  console.log(`   API: http://localhost:${config.port}   POS login: ${MERCHANT.code} / ${MERCHANT.password}`);
   console.log(`   Extra merchants need the setup token: ${config.devSetupToken}`);
 
   ctx.db.close();

@@ -1,7 +1,7 @@
 {
-  "name": "PalmPay POS (PROTOTYPE)",
-  "short_name": "PalmPay POS",
-  "description": "SIMULATED point-of-sale for the PalmPay palm-payment prototype.",
+  "name": "Palm Wallet POS (PROTOTYPE)",
+  "short_name": "Palm Wallet POS",
+  "description": "SIMULATED point-of-sale for the Palm Wallet palm-payment prototype.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#17111f",

@@ -21,16 +21,16 @@ function redact(value: unknown, depth = 0): unknown {
   return out;
 }
 
-export interface PalmaLogger {
+export interface PalmWalletLogger {
   debug(msg: string, obj?: unknown): void;
   info(msg: string, obj?: unknown): void;
   warn(msg: string, obj?: unknown): void;
   error(msg: string, obj?: unknown): void;
-  child(bindings: Record<string, unknown>): PalmaLogger;
+  child(bindings: Record<string, unknown>): PalmWalletLogger;
   level: LogLevel;
 }
 
-export function createLogger(level: LogLevel = 'info', bindings: Record<string, unknown> = {}): PalmaLogger {
+export function createLogger(level: LogLevel = 'info', bindings: Record<string, unknown> = {}): PalmWalletLogger {
   const min = LEVEL_ORDER[level];
   const write = (at: LogLevel, msg: string, obj?: unknown): void => {
     if (LEVEL_ORDER[at] < min) return;
@@ -57,7 +57,7 @@ export function createLogger(level: LogLevel = 'info', bindings: Record<string, 
 
 /** Satisfies Fastify's logger option shape minimally. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export function asFastifyLogger(l: PalmaLogger): any {
+export function asFastifyLogger(l: PalmWalletLogger): any {
   return {
     level: l.level,
     info: (o: any, m?: string) => (typeof o === 'string' ? l.info(o) : l.info(m ?? '', o)),

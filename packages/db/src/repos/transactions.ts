@@ -1,4 +1,4 @@
-import { nowIso, PalmaDatabase } from '../database.js';
+import { nowIso, PalmWalletDatabase } from '../database.js';
 import type { TransactionRow, TxnStatus } from '../rows.js';
 
 const COLS =
@@ -44,7 +44,7 @@ export interface TxnPage {
 }
 
 export class TransactionRepo {
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
   insert(t: NewTransaction): void {
     this.db

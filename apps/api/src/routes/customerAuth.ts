@@ -1,10 +1,10 @@
-import { ApiError } from '@palma/shared';
-import { CustomerLoginSchema, RegisterCustomerSchema, ChangePinSchema, DeletePalmSchema } from '@palma/shared';
+import { ApiError } from '@palmwallet/shared';
+import { CustomerLoginSchema, RegisterCustomerSchema, ChangePasswordSchema, DeletePalmSchema } from '@palmwallet/shared';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../container.js';
 import { customerDTO } from '../dto.js';
 import { isUniqueViolation, parseBody } from '../lib.js';
-import { hashPin, verifyPin } from '../security/passwordHash.js';
+import { hashPassword, verifyPassword } from '../security/passwordHash.js';
 
 export function customerAuthRoutes(app: FastifyInstance, ctx: AppContext): void {
   app.post('/api/v1/customers/register', async (req) => {
@@ -14,7 +14,7 @@ export function customerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
     }
     const id = crypto.randomUUID();
     try {
-      ctx.repos.customers.insert({ id, phone: body.phone, name: body.name, pinHash: await hashPin(body.pin) });
+      ctx.repos.customers.insert({ id, phone: body.phone, name: body.name, passwordHash: hashPassword(body.password) });
     } catch (err) {
       if (isUniqueViolation(err)) throw new ApiError('ACCOUNT_EXISTS', 'A customer with this phone already exists');
       throw err;
@@ -47,11 +47,11 @@ export function customerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
       throw new ApiError('RATE_LIMITED', `Too many attempts — retry in ${ctx.throttle.retryAfterSeconds(throttleKey)}s`);
     }
     const row = ctx.repos.customers.getByPhone(body.phone);
-    const okPin = row ? await verifyPin(body.pin, row.pinHash) : false;
-    if (!row || !okPin) {
+    const okPassword = row ? verifyPassword(body.password, row.passwordHash) : false;
+    if (!row || !okPassword) {
       ctx.throttle.recordFailure(throttleKey);
       ctx.repos.audit.append({ actorType: 'customer', actorId: body.phone, event: 'auth.login', outcome: 'rejected' });
-      throw new ApiError('AUTH_INVALID_CREDENTIALS', 'Wrong phone or PIN');
+      throw new ApiError('AUTH_INVALID_CREDENTIALS', 'Wrong phone or password');
     }
     if (row.status !== 'active') throw new ApiError('ACCOUNT_DISABLED', 'This account is disabled');
     ctx.throttle.clear(throttleKey);
@@ -74,17 +74,17 @@ export function customerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
     return { ok: true as const, data: { customer: customerDTO(me, enrolled) } };
   });
 
-  app.post('/api/v1/customers/me/pin', { onRequest: [ctx.auth.requireCustomer] }, async (req) => {
-    const body = parseBody(req, ChangePinSchema);
+  app.post('/api/v1/customers/me/password', { onRequest: [ctx.auth.requireCustomer] }, async (req) => {
+    const body = parseBody(req, ChangePasswordSchema);
     const me = req.customer!;
-    if (!(await verifyPin(body.currentPin, me.pinHash))) {
-      throw new ApiError('AUTH_INVALID_CREDENTIALS', 'Current PIN is wrong');
+    if (!verifyPassword(body.currentPassword, me.passwordHash)) {
+      throw new ApiError('AUTH_INVALID_CREDENTIALS', 'Current password is wrong');
     }
-    ctx.repos.customers.updatePinHash(me.id, await hashPin(body.newPin));
+    ctx.repos.customers.updatePasswordHash(me.id, hashPassword(body.newPassword));
     ctx.repos.audit.append({
       actorType: 'customer',
       actorId: me.id,
-      event: 'customer.pin_changed',
+      event: 'customer.password_changed',
       subjectType: 'customer',
       subjectId: me.id
     });
@@ -97,5 +97,5 @@ export async function palmEnrolled(ctx: AppContext, customerId: string): Promise
   return rows.length > 0;
 }
 
-// Re-exported for the palm routes module (PIN confirmation on delete).
+// Re-exported for the palm routes module (password confirmation on delete).
 export { DeletePalmSchema };

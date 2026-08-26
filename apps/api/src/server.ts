@@ -5,7 +5,7 @@
 
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
-import type { PalmaDatabase } from '@palma/db';
+import type { PalmWalletDatabase } from '@palmwallet/db';
 
 import type { AppContext } from './container.js';
 import { asFastifyLogger } from './logging.js';
@@ -21,7 +21,7 @@ import { walletRoutes } from './routes/wallet.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
-    palmaDb: PalmaDatabase;
+    palmWalletDb: PalmWalletDatabase;
   }
 }
 
@@ -33,7 +33,7 @@ export function buildApp(ctx: AppContext) {
     bodyLimit: 1024 * 256 // descriptors are ~1.4KB; generous but bounded
   });
 
-  app.decorate('palmaDb', ctx.db);
+  app.decorate('palmWalletDb', ctx.db);
 
   void app.register(cors, {
     origin: ctx.config.corsOrigins === '*' ? true : ctx.config.corsOrigins,
@@ -41,7 +41,7 @@ export function buildApp(ctx: AppContext) {
   });
 
   registerErrorHandler(app);
-  app.log.info(`PalmPay API starting — PROTOTYPE${ctx.config.demoMode ? ' (DEMO MODE)' : ''}`);
+  app.log.info(`Palm Wallet API starting — PROTOTYPE${ctx.config.demoMode ? ' (DEMO MODE)' : ''}`);
 
   healthRoutes(app, ctx);
   customerAuthRoutes(app, ctx);

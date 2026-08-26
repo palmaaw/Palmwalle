@@ -1,10 +1,10 @@
 /**
  * Row -> wire DTO mappers. These are the ONLY place persistence shapes touch
- * response bodies; fields not selected here (pin_hash, ciphertext, meta_json
- * internals...) structurally cannot leak.
+ * response bodies; fields not selected here (password_hash, ciphertext,
+ * meta_json internals...) structurally cannot leak.
  */
 
-import { CURRENCY, formatEGP } from '@palma/shared';
+import { CURRENCY, formatEGP } from '@palmwallet/shared';
 import type {
   CustomerDTO,
   MerchantDTO,
@@ -12,9 +12,9 @@ import type {
   WalletDTO,
   MaskedParty,
   MatchInfo
-} from '@palma/shared';
-import type { CustomerRow, LedgerEntryRow, MerchantRow, TransactionRow, WalletAccountRow } from '@palma/db';
-import type { BestMatchResult } from '@palma/biometrics';
+} from '@palmwallet/shared';
+import type { CustomerRow, LedgerEntryRow, MerchantRow, TransactionRow, WalletAccountRow } from '@palmwallet/db';
+import type { BestMatchResult } from '@palmwallet/biometrics';
 
 /** Mask Egyptian mobiles like +201012345678 -> +2010•••5678. */
 export function maskPhone(phone: string): string {
@@ -91,7 +91,7 @@ export function matchInfo(m: BestMatchResult): MatchInfo {
     outcome: m.decision === 'match' ? 'match' : m.decision,
     score: Math.round(m.similarity * 10000) / 10000,
     threshold: m.threshold,
-    algoId: 'palma-sim-hog-v1'
+    algoId: 'palmwallet-sim-hog-v1'
   };
 }
 

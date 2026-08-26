@@ -11,7 +11,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
-import { MAX_DEPOSIT_PIASTERS, MAX_PAYMENT_PIASTERS, MIN_DEPOSIT_PIASTERS, MIN_PAYMENT_PIASTERS } from '@palma/shared';
+import { MAX_DEPOSIT_PIASTERS, MAX_PAYMENT_PIASTERS, MIN_DEPOSIT_PIASTERS, MIN_PAYMENT_PIASTERS } from '@palmwallet/shared';
 import { loadEnvFile } from './envfile.js';
 
 export interface AppConfig {
@@ -78,7 +78,7 @@ function devSecrets(databasePath: string): { jwtSecretB64: string; templateMaste
   writeFileSync(file, JSON.stringify(fresh, null, 2));
   // eslint-disable-next-line no-console -- operator-facing startup warning
   console.warn(
-    `[palma] DEMO MODE: generated dev secrets at ${file}. They are NOT production secrets; ` +
+    `[palm-wallet] DEMO MODE: generated dev secrets at ${file}. They are NOT production secrets; ` +
       'set JWT_SECRET and TEMPLATE_MASTER_KEY env vars for anything real.'
   );
   return fresh;
@@ -93,7 +93,7 @@ export function loadConfig(envFile?: string): AppConfig {
   }
   const nodeEnv = nodeEnvRaw;
   const demoMode = (process.env.DEMO_MODE ?? 'true') !== 'false';
-  const databasePath = process.env.DATABASE_PATH ?? './data/palma.db';
+  const databasePath = process.env.DATABASE_PATH ?? './data/palm-wallet.db';
 
   let jwtSecretB64: string;
   let templateMasterKeyB64: string;
@@ -127,8 +127,8 @@ export function loadConfig(envFile?: string): AppConfig {
     minDepositPiasters: requireInt('MIN_DEPOSIT_PIASTERS', MIN_DEPOSIT_PIASTERS),
     maxDepositPiasters: requireInt('MAX_DEPOSIT_PIASTERS', MAX_DEPOSIT_PIASTERS),
     jwtTtlSeconds: requireInt('JWT_TTL_SECONDS', 43_200),
-    devSetupToken: process.env.DEV_SETUP_TOKEN ?? 'palma-dev-setup',
-    devToken: process.env.DEV_TOKEN ?? 'palma-dev',
+    devSetupToken: process.env.DEV_SETUP_TOKEN ?? 'palm-wallet-dev-setup',
+    devToken: process.env.DEV_TOKEN ?? 'palm-wallet-dev',
     corsOrigins
   };
 }

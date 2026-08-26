@@ -5,7 +5,7 @@
  * rejected (REPLAY_MISMATCH at the API layer).
  */
 
-import { nowIso, PalmaDatabase } from '../database.js';
+import { nowIso, PalmWalletDatabase } from '../database.js';
 import type { IdempotencyRow } from '../rows.js';
 
 const COLS =
@@ -13,7 +13,7 @@ const COLS =
   'http_status AS httpStatus, created_at AS createdAt';
 
 export class IdempotencyRepo {
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
   get(scope: string, key: string): IdempotencyRow | null {
     return (this.db

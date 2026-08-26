@@ -1,12 +1,12 @@
 /**
- * Typed fetch wrapper for the PalmPay API. Unwraps the {ok,data|error}
+ * Typed fetch wrapper for the Palm Wallet API. Unwraps the {ok,data|error}
  * envelope into plain data or a typed ApiError carrying the ErrorCode.
  */
 
-import type { DepositSource } from '@palma/shared';
+import type { DepositSource } from '@palmwallet/shared';
 
 const BASE = '/api/v1';
-const TOKEN_KEY = 'palma.token';
+const TOKEN_KEY = 'palmwallet.token';
 
 export class ApiError extends Error {
   constructor(
@@ -38,7 +38,7 @@ async function req<T>(method: 'GET' | 'POST' | 'DELETE', path: string, body?: un
   try {
     res = await fetch(`${BASE}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch {
-    throw new ApiError('NETWORK', 'Cannot reach PalmPay — check your connection', 0);
+    throw new ApiError('NETWORK', 'Cannot reach Palm Wallet — check your connection', 0);
   }
 
   const envelope = (await res.json().catch(() => null)) as
@@ -91,11 +91,11 @@ export interface MatchInfo {
 }
 
 export const api = {
-  register: (name: string, phone: string, pin: string) =>
-    req<{ accessToken: string; customer: CustomerDTO }>('POST', '/customers/register', { name, phone, pin }),
+  register: (name: string, phone: string, password: string) =>
+    req<{ accessToken: string; customer: CustomerDTO }>('POST', '/customers/register', { name, phone, password }),
 
-  login: (phone: string, pin: string) =>
-    req<{ accessToken: string; customer: CustomerDTO }>('POST', '/auth/customer/login', { phone, pin }),
+  login: (phone: string, password: string) =>
+    req<{ accessToken: string; customer: CustomerDTO }>('POST', '/auth/customer/login', { phone, password }),
 
   me: () => req<{ customer: CustomerDTO }>('GET', '/customers/me'),
 
@@ -143,7 +143,8 @@ export const api = {
       { probe }
     ),
 
-  deletePalm: (pin: string) => req<{ deleted: boolean }>('DELETE', '/customers/me/palm', { pin }),
+  deletePalm: (password: string) => req<{ deleted: boolean }>('DELETE', '/customers/me/palm', { password }),
 
-  changePin: (currentPin: string, newPin: string) => req<{ changed: boolean }>('POST', '/customers/me/pin', { currentPin, newPin })
+  changePassword: (currentPassword: string, newPassword: string) =>
+    req<{ changed: boolean }>('POST', '/customers/me/password', { currentPassword, newPassword })
 };

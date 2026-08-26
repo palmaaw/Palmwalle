@@ -27,7 +27,7 @@ Biometric rejections from `/payments/authorize` are **HTTP 200** with
 | PROVIDER_FAILED | 502 | simulated provider outage |
 
 Auth: `Authorization: Bearer <accessToken>`. Dev diagnostics:
-`x-dev-token: palma-dev`. Merchant bootstrap: `x-setup-token: palma-dev-setup`.
+`x-dev-token: palm-wallet-dev`. Merchant bootstrap: `x-setup-token: palm-wallet-dev-setup`.
 
 ---
 
@@ -42,13 +42,15 @@ Auth: `Authorization: Bearer <accessToken>`. Dev diagnostics:
 ## Customers
 
 ```http
-POST /api/v1/customers/register     { name, phone:"+2010…", pin:"1234" }
+POST /api/v1/customers/register     { name, phone:"+2010…", password:"demo1234" }
 → { accessToken, tokenType:"Bearer", expiresInSeconds, customer }
 
-POST /api/v1/auth/customer/login    { phone, pin }        # throttled
+POST /api/v1/auth/customer/login    { phone, password }   # throttled
 GET  /api/v1/customers/me
-POST /api/v1/customers/me/pin       { currentPin, newPin }
+POST /api/v1/customers/me/password  { currentPassword, newPassword }
 ```
+
+Passwords are minimum 6 characters and stored only as SHA-256 hex digests.
 
 ## Palm lifecycle
 
@@ -58,7 +60,7 @@ accepts only that code:
 
 ```jsonc
 // the ONLY palm-derived artifact on the wire (~172 B base64)
-{ "code": { "algoId": "palma.palm.hog-sign.v1", "version": 1,
+{ "code": { "algoId": "palm-wallet.palm.hog-sign.v1", "version": 1,
              "bits": "<base64 of exactly 128 bytes>" } }
 ```
 
@@ -79,7 +81,7 @@ GET    /api/v1/customers/me/palm/status  → { enrolled, templateId, algo }
 POST   /api/v1/customers/me/palm/self-test  { probe:{code,quality} }
        → { decision:'match'|'no_match', score, threshold }  # live 1:1, own template;
                                                             # rate-limited per customer
-DELETE /api/v1/customers/me/palm            { pin }          # PIN re-auth required
+DELETE /api/v1/customers/me/palm            { password }     # password re-auth required
 ```
 
 ## Wallet
@@ -100,8 +102,8 @@ GET  /api/v1/customers/me/transactions?cursor&limit=20
 
 ```http
 POST /api/v1/merchants/register           # header x-setup-token required (dev bootstrap)
-     { name, code:"ZAMALEK-COFFEE", phone, pin }
-POST /api/v1/auth/merchant/login          { identifier: code-or-phone, pin }
+     { name, code:"ZAMALEK-COFFEE", phone, password }
+POST /api/v1/auth/merchant/login          { identifier: code-or-phone, password }
 GET  /api/v1/merchants/me · /me/wallet · /me/transactions?cursor&limit
 ```
 
@@ -126,7 +128,7 @@ settlement records and the audit chain):
                       "amountPiasters":12000, "createdAt":"…", "settledAt":"…" },
     "customer":   { "displayName":"Aya Hassan", "maskedPhone":"+2010•••001" },
     "match":      { "outcome":"match", "similarityBand":"high",
-                     "threshold":0.86, "algoId":"palma.palm.hog-sign.v1" },
+                     "threshold":0.86, "algoId":"palm-wallet.palm.hog-sign.v1" },
     "wallet":     { "balancePiasters":238000, "formatted":"EGP 2,380.00" } } }
 ```
 

@@ -2,8 +2,8 @@
  * Merchant-side payment endpoints: one-step authorize + refunds.
  */
 
-import { ApiError, isFresh } from '@palma/shared';
-import { AuthorizePaymentSchema, RefundSchema } from '@palma/shared';
+import { ApiError, isFresh } from '@palmwallet/shared';
+import { AuthorizePaymentSchema, RefundSchema } from '@palmwallet/shared';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../container.js';
 import { transactionDTO, walletDTO } from '../dto.js';

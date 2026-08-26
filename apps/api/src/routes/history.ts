@@ -3,8 +3,8 @@
  * counterparty resolution, parent-ref resolution, sign convention.
  */
 
-import type { MaskedParty, TransactionDTO } from '@palma/shared';
-import type { TransactionRow } from '@palma/db';
+import type { MaskedParty, TransactionDTO } from '@palmwallet/shared';
+import type { TransactionRow } from '@palmwallet/db';
 import type { AppContext } from '../container.js';
 import { maskPhone, transactionDTO } from '../dto.js';
 

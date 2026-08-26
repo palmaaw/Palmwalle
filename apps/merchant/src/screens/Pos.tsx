@@ -2,16 +2,20 @@
  * The till: takings → amount keypad → scan screen → result. Retry preserves
  * the entered amount; every attempt gets a FRESH requestId + timestamp so the
  * server's replay protection can distinguish a retry from a duplicate charge.
+ *
+ * IDENTITY-BLIND: the till never chooses who is paying — it scans whatever
+ * palm is presented and the server identifies it against enrolled templates.
+ * The customer's name appears only in the outcome, like a real payment.
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { formatEGP } from '@palma/shared';
+import { formatEGP } from '@palmwallet/shared';
 
 import { api, ApiError } from '../api.js';
 import type { TransactionDTO, WalletDTO } from '../api.js';
-import { DEMO_IDENTITIES, usePos, useProbeBuilder } from '../state.js';
+import { usePalmReader, usePos } from '../state.js';
 
 export function Pos(): JSX.Element {
   const { merchant, signOut } = usePos();
@@ -121,10 +125,10 @@ function sameDay(iso: string): boolean {
 type Flow = 'keypad' | 'scan' | 'result';
 
 function ChargeFlow({ onClose, onDone }: { onClose(): void; onDone(): void }): JSX.Element {
-  const buildProbe = useProbeBuilder();
+  const readPalm = usePalmReader();
   const [flow, setFlow] = useState<Flow>('keypad');
   const [digits, setDigits] = useState('');
-  const [outcome, setOutcome] = useState<{ ok: boolean; heading: string; detail: string; ref?: string; score?: number } | null>(null);
+  const [outcome, setOutcome] = useState<{ ok: boolean; heading: string; detail: string; ref?: string } | null>(null);
   const [scanning, setScanning] = useState(false);
 
   /** digits are whole pounds; piasters = ×100. */
@@ -137,13 +141,13 @@ function ChargeFlow({ onClose, onDone }: { onClose(): void; onDone(): void }): J
     setDigits((d) => (d === '0' ? k : (d + k).slice(0, 7)));
   }
 
-  async function scan(slug: string): Promise<void> {
-    if (!buildProbe) return; // reader not ready — buttons are disabled anyway
+  async function scan(): Promise<void> {
+    if (!readPalm) return; // reader not ready — button is disabled anyway
     setScanning(true);
     // Simulated scanner latency for UX realism.
     await new Promise((r) => setTimeout(r, 550));
     try {
-      const r = await api.authorize(piasters, buildProbe(slug));
+      const r = await api.authorize(piasters, readPalm());
       if (r.kind === 'completed') {
         setOutcome({
           ok: true,
@@ -220,26 +224,18 @@ function ChargeFlow({ onClose, onDone }: { onClose(): void; onDone(): void }): J
               {scanning ? <div className="scanline" /> : null}
             </div>
             <p className="muted center small">
-              {scanning ? 'Matching against enrolled customers…' : 'Ask the customer to hold their palm over the reader'}
+              {!readPalm
+                ? 'Reader initialising…'
+                : scanning
+                  ? 'Matching against enrolled customers…'
+                  : 'Ask the customer to hold their palm over the reader'}
             </p>
             {!scanning ? (
               <>
-                <p className="picker-label">
-                  {buildProbe ? 'SIMULATED reader — pick who is paying:' : 'Reader initialising (fetching protection key)…'}
-                </p>
-                <div className="identity-grid">
-                  {DEMO_IDENTITIES.map((d) => (
-                    <button key={d.slug} className="identity" disabled={!buildProbe} onClick={() => void scan(d.slug)}>
-                      <strong>{d.name.split(' ')[0]}</strong>
-                      <small>{d.note}</small>
-                    </button>
-                  ))}
-                  <button className="identity stranger" disabled={!buildProbe} onClick={() => void scan('unknown-stranger')}>
-                    <strong>Stranger</strong>
-                    <small>should be rejected</small>
-                  </button>
-                </div>
-                <CustomSlugScan disabled={scanning} onScan={(slug) => void scan(slug)} />
+                <button className="primary big" disabled={!readPalm} onClick={() => void scan()}>
+                  🖐 Scan palm
+                </button>
+                <p className="muted center small">The till never sees names — the server identifies the palm itself.</p>
                 <button className="ghost" onClick={() => setFlow('keypad')}>
                   ← Wrong amount
                 </button>
@@ -282,18 +278,6 @@ function ChargeFlow({ onClose, onDone }: { onClose(): void; onDone(): void }): J
           </div>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function CustomSlugScan({ disabled, onScan }: { disabled: boolean; onScan(slug: string): void }): JSX.Element {
-  const [slug, setSlug] = useState('');
-  return (
-    <div className="custom-slug">
-      <input value={slug} onChange={(e) => setSlug(e.target.value.trim())} placeholder="custom palm ID…" />
-      <button className="ghost" disabled={disabled || slug.length < 3} onClick={() => onScan(slug)}>
-        Scan
-      </button>
     </div>
   );
 }

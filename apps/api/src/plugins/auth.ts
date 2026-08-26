@@ -3,9 +3,9 @@
  * state is re-checked from the database where it matters.
  */
 
-import { ApiError } from '@palma/shared';
-import type { PalmaDatabase, CustomerRow, MerchantRow } from '@palma/db';
-import { CustomerRepo, MerchantRepo } from '@palma/db';
+import { ApiError } from '@palmwallet/shared';
+import type { PalmWalletDatabase, CustomerRow, MerchantRow } from '@palmwallet/db';
+import { CustomerRepo, MerchantRepo } from '@palmwallet/db';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { TokenService } from '../security/tokens.js';
 
@@ -24,7 +24,7 @@ export interface AuthHooks {
 }
 
 interface DbServer {
-  palmaDb: PalmaDatabase;
+  palmWalletDb: PalmWalletDatabase;
 }
 
 function bearerToken(req: FastifyRequest): string | null {
@@ -44,7 +44,7 @@ export function authHooks(tokens: TokenService): AuthHooks {
       throw new ApiError('AUTH_REQUIRED', 'Session expired or invalid — sign in again');
     }
     if (claims.typ !== 'customer') throw new ApiError('FORBIDDEN', 'Customer session required');
-    const customers = new CustomerRepo((req.server as DbServer).palmaDb);
+    const customers = new CustomerRepo((req.server as DbServer).palmWalletDb);
     const row = customers.getById(claims.sub);
     if (!row) throw new ApiError('AUTH_REQUIRED', 'Account no longer exists');
     if (row.status !== 'active') throw new ApiError('ACCOUNT_DISABLED', 'This account is disabled');
@@ -61,7 +61,7 @@ export function authHooks(tokens: TokenService): AuthHooks {
       throw new ApiError('AUTH_REQUIRED', 'Session expired or invalid — sign in again');
     }
     if (claims.typ !== 'merchant') throw new ApiError('FORBIDDEN', 'Merchant session required');
-    const merchants = new MerchantRepo((req.server as DbServer).palmaDb);
+    const merchants = new MerchantRepo((req.server as DbServer).palmWalletDb);
     const row = merchants.getById(claims.sub);
     if (!row) throw new ApiError('AUTH_REQUIRED', 'Merchant account no longer exists');
     if (row.status !== 'active') throw new ApiError('ACCOUNT_DISABLED', 'This merchant account is disabled');

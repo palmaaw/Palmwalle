@@ -1,5 +1,5 @@
 /**
- * @palma/biometrics — SIMULATED biometric pipeline (see docs/BIOMETRICS.md).
+ * @palmwallet/biometrics — SIMULATED biometric pipeline (see docs/BIOMETRICS.md).
  * Runs identically in browsers and Node: no node:* imports, no DOM-only globals.
  *
  * SECURITY SHAPE (prototype-grade, honest seams):

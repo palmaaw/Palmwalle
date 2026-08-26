@@ -6,8 +6,8 @@
  * rolling back everything posted in the surrounding BEGIN IMMEDIATE block.
  */
 
-import { newId } from '@palma/shared';
-import { nowIso, PalmaDatabase } from '../database.js';
+import { newId } from '@palmwallet/shared';
+import { nowIso, PalmWalletDatabase } from '../database.js';
 import type { LedgerEntryRow } from '../rows.js';
 
 export interface LedgerLeg {
@@ -23,7 +23,7 @@ const COLS =
   'balance_after AS balanceAfter, memo, created_at AS createdAt';
 
 export class LedgerRepo {
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
   entriesForTransaction(transactionId: string): LedgerEntryRow[] {
     return this.db

@@ -54,8 +54,8 @@ function errCode(r: ApiResponse): string {
 }
 
 async function main(): Promise<void> {
-  console.log('PalmPay headless E2E — ⚠️ SIMULATED prototype\n');
-  const dir = mkdtempSync(join(tmpdir(), 'palma-e2e-'));
+  console.log('Palm Wallet headless E2E — ⚠️ SIMULATED prototype\n');
+  const dir = mkdtempSync(join(tmpdir(), 'palm-wallet-e2e-'));
   const server = await bootServer(join(dir, 'e2e.db'));
   const { base, ctx } = server;
 
@@ -101,7 +101,7 @@ async function main(): Promise<void> {
     await step('register customer', async () => {
       custPhone = '+2010' + String(Math.floor(Math.random() * 1e8)).padStart(8, '0');
       const r = note(
-        await call(base, 'POST', '/api/v1/customers/register', { body: { name: 'E2E Aya', phone: custPhone, pin: '1234' } })
+        await call(base, 'POST', '/api/v1/customers/register', { body: { name: 'E2E Aya', phone: custPhone, password: 'demo1234' } })
       );
       expect(r.ok && typeof r.data?.accessToken === 'string', `status ${r.status} ${errCode(r)}`);
       custToken = r.data!.accessToken as string;
@@ -193,14 +193,14 @@ async function main(): Promise<void> {
     await step('merchant bootstrap guarded by setup token', async () => {
       const bad = note(
         await call(base, 'POST', '/api/v1/merchants/register', {
-          body: { name: 'No Token Shop', code: 'NO-TOKEN-SHOP', phone: '+201200007777', pin: '2468' }
+          body: { name: 'No Token Shop', code: 'NO-TOKEN-SHOP', phone: '+201200007777', password: 'shop2468' }
         })
       );
       expect(bad.status === 403, `expected 403 got ${bad.status}`);
       const ok = note(
         await call(base, 'POST', '/api/v1/merchants/register', {
           setupToken: ctx.config.devSetupToken,
-          body: { name: 'Zamalek Coffee (e2e)', code: 'E2E-CAFE', phone: '+201200006666', pin: '2468' }
+          body: { name: 'Zamalek Coffee (e2e)', code: 'E2E-CAFE', phone: '+201200006666', password: 'shop2468' }
         })
       );
       expect(ok.ok && typeof ok.data?.accessToken === 'string', `${ok.status} ${errCode(ok)}`);
@@ -271,7 +271,7 @@ async function main(): Promise<void> {
 
     await step('zero-balance customer → INSUFFICIENT_FUNDS', async () => {
       const reg = note(
-        await call(base, 'POST', '/api/v1/customers/register', { body: { name: 'Broke Nour', phone: '+201099999001', pin: '1234' } })
+        await call(base, 'POST', '/api/v1/customers/register', { body: { name: 'Broke Nour', phone: '+201099999001', password: 'demo1234' } })
       );
       const brokeToken = reg.data?.accessToken as string;
       const k = await call(base, 'GET', '/api/v1/biometrics/protection-key', { token: brokeToken });
@@ -342,10 +342,21 @@ async function main(): Promise<void> {
       return `${String(r.data?.checked)} events verified`;
     });
 
-    await step('PRIVACY GREP — no descriptors/ciphertext/PINs/key bytes in any response', async () => {
+    await step('PRIVACY GREP — no descriptors/ciphertext/passwords/key bytes in any response', async () => {
       // 'protectionKey' must never appear outside the single by-design
       // key-delivery response, which is excluded from the corpus at fetch time.
-      const forbidden = ['pin_hash', 'pinHash', '"vec"', 'descriptor"', 'ciphertext', 'key_id', 'protectionKey', 'storageKey'];
+      const forbidden = [
+        'password_hash',
+        'passwordHash',
+        'pin_hash',
+        'pinHash',
+        '"vec"',
+        'descriptor"',
+        'ciphertext',
+        'key_id',
+        'protectionKey',
+        'storageKey'
+      ];
       const leaks: string[] = [];
       for (const body of bodies) {
         for (const needle of forbidden) {

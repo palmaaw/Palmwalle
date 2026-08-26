@@ -5,19 +5,19 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { newId } from '@palma/shared';
-import { PalmaDatabase, nowIso } from './database.js';
+import { newId } from '@palmwallet/shared';
+import { PalmWalletDatabase, nowIso } from './database.js';
 import { runMigrations, sha256Hex } from './migrator.js';
 import { AccountRepo, AuditRepo, CustomerRepo, IdempotencyRepo, LedgerRepo, SqliteTemplateStore, TransactionRepo, assertInvariants, collectInvariants } from './index.js';
 
-function freshDb(): PalmaDatabase {
-  const db = new PalmaDatabase(':memory:');
+function freshDb(): PalmWalletDatabase {
+  const db = new PalmWalletDatabase(':memory:');
   runMigrations(db);
   return db;
 }
 
 /** Two funded accounts + a completed payment between them; returns ids. */
-function seedPayment(db: PalmaDatabase, amountA = 500): { a: string; b: string; txn: string } {
+function seedPayment(db: PalmWalletDatabase, amountA = 500): { a: string; b: string; txn: string } {
   const accounts = new AccountRepo(db);
   const txns = new TransactionRepo(db);
   const ledger = new LedgerRepo(db);
@@ -194,19 +194,22 @@ describe('repos', () => {
 
   it('store one active template per subject and revoke cleanly', async () => {
     const db = freshDb();
-    new CustomerRepo(db).insert({ id: 'c-1', phone: '+201000000001', name: 'Test', pinHash: 'scrypt$x' });
+    new CustomerRepo(db).insert({
+      id: 'c-1', phone: '+201000000001', name: 'Test',
+      passwordHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    });
     const store = new SqliteTemplateStore(db);
     const sealed = { ciphertext: new Uint8Array(32).fill(9), keyId: 'k1' };
     await store.insert({
       templateId: 't1', subjectType: 'customer', subjectId: 'c-1',
-      algoId: 'palma-sim-hog-v1', algoVersion: '1.0.0', descriptorDim: 160, bits: 1024,
+      algoId: 'palmwallet-sim-hog-v1', algoVersion: '1.0.0', descriptorDim: 160, bits: 1024,
       keyId: 'k1', sealed, qualityScore: 0.9, captureSource: 'synthetic'
     });
     // A second ACTIVE insert for the same subject violates the partial unique index.
     await expect(
       store.insert({
         templateId: 't2', subjectType: 'customer', subjectId: 'c-1',
-        algoId: 'palma-sim-hog-v1', algoVersion: '1.0.0', descriptorDim: 160, bits: 1024,
+        algoId: 'palmwallet-sim-hog-v1', algoVersion: '1.0.0', descriptorDim: 160, bits: 1024,
         keyId: 'k1', sealed, qualityScore: 0.9, captureSource: 'synthetic'
       })
     ).rejects.toThrow(/UNIQUE/i);
@@ -297,10 +300,10 @@ describe('invariants', () => {
 
 describe('cross-connection serialization', () => {
   it('serialize concurrent writers so read-modify-write cannot lose updates', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'palma-db-test-'));
+    const dir = mkdtempSync(join(tmpdir(), 'palm-wallet-db-test-'));
     const path = join(dir, 'conc.db');
     try {
-      const setup = new PalmaDatabase(path);
+      const setup = new PalmWalletDatabase(path);
       runMigrations(setup);
       const acc = new AccountRepo(setup);
       const target = acc.createForOwner({ ownerType: 'system', ownerId: 'counter' }).id;
@@ -310,7 +313,7 @@ describe('cross-connection serialization', () => {
       // reading then writing inside BEGIN IMMEDIATE. Lost updates would show up
       // as a final balance below 40.
       const bump = async (): Promise<void> => {
-        const db = new PalmaDatabase(path, { busyTimeoutMs: 4000 });
+        const db = new PalmWalletDatabase(path, { busyTimeoutMs: 4000 });
         try {
           for (let i = 0; i < 20; i++) {
             await db.withTransaction(() => {
@@ -323,7 +326,7 @@ describe('cross-connection serialization', () => {
         }
       };
       await Promise.all([bump(), bump()]);
-      const check = new PalmaDatabase(path);
+      const check = new PalmWalletDatabase(path);
       try {
         expect(new AccountRepo(check).balanceOf(target)).toBe(40);
       } finally {

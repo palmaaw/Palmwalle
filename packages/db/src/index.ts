@@ -1,9 +1,9 @@
 /**
- * @palma/db — SQLite persistence for PalmPay (PROTOTYPE).
+ * @palmwallet/db — SQLite persistence for Palm Wallet (PROTOTYPE).
  * Node-only (node:sqlite); the browser packages never import this.
  */
 
-export { PalmaDatabase, nowIso } from './database.js';
+export { PalmWalletDatabase, nowIso } from './database.js';
 export { runMigrations, sha256Hex } from './migrator.js';
 export type { AppliedMigration } from './migrator.js';
 

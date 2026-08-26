@@ -1,19 +1,19 @@
-import { nowIso, PalmaDatabase } from '../database.js';
+import { nowIso, PalmWalletDatabase } from '../database.js';
 import type { CustomerRow, MerchantRow } from '../rows.js';
 
-const COLS = 'id, phone, name, pin_hash AS pinHash, status, created_at AS createdAt, updated_at AS updatedAt';
+const COLS = 'id, phone, name, password_hash AS passwordHash, status, created_at AS createdAt, updated_at AS updatedAt';
 
 export class CustomerRepo {
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
-  insert(c: { id: string; phone: string; name: string; pinHash: string }): void {
+  insert(c: { id: string; phone: string; name: string; passwordHash: string }): void {
     const ts = nowIso();
     this.db
       .stmt(
-        `INSERT INTO customers (id, phone, name, pin_hash, status, created_at, updated_at)
+        `INSERT INTO customers (id, phone, name, password_hash, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, 'active', ?, ?)`
       )
-      .run(c.id, c.phone, c.name, c.pinHash, ts, ts);
+      .run(c.id, c.phone, c.name, c.passwordHash, ts, ts);
   }
 
   getById(id: string): CustomerRow | null {
@@ -28,25 +28,25 @@ export class CustomerRepo {
     this.db.stmt('UPDATE customers SET status = ?, updated_at = ? WHERE id = ?').run(status, nowIso(), id);
   }
 
-  updatePinHash(id: string, pinHash: string): void {
-    this.db.stmt('UPDATE customers SET pin_hash = ?, updated_at = ? WHERE id = ?').run(pinHash, nowIso(), id);
+  updatePasswordHash(id: string, passwordHash: string): void {
+    this.db.stmt('UPDATE customers SET password_hash = ?, updated_at = ? WHERE id = ?').run(passwordHash, nowIso(), id);
   }
 }
 
 const M_COLS =
-  'id, code, name, phone, pin_hash AS pinHash, status, created_at AS createdAt, updated_at AS updatedAt';
+  'id, code, name, phone, password_hash AS passwordHash, status, created_at AS createdAt, updated_at AS updatedAt';
 
 export class MerchantRepo {
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
-  insert(m: { id: string; code: string; name: string; phone: string; pinHash: string }): void {
+  insert(m: { id: string; code: string; name: string; phone: string; passwordHash: string }): void {
     const ts = nowIso();
     this.db
       .stmt(
-        `INSERT INTO merchants (id, code, name, phone, pin_hash, status, created_at, updated_at)
+        `INSERT INTO merchants (id, code, name, phone, password_hash, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, 'active', ?, ?)`
       )
-      .run(m.id, m.code, m.name, m.phone, m.pinHash, ts, ts);
+      .run(m.id, m.code, m.name, m.phone, m.passwordHash, ts, ts);
   }
 
   getById(id: string): MerchantRow | null {

@@ -2,8 +2,8 @@
  * Customer wallet: balance, SIMULATED provider top-ups, transaction history.
  */
 
-import { ApiError, isFresh } from '@palma/shared';
-import { CreateDepositSchema, LimitSchema } from '@palma/shared';
+import { ApiError, isFresh } from '@palmwallet/shared';
+import { CreateDepositSchema, LimitSchema } from '@palmwallet/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppContext } from '../container.js';

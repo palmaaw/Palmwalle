@@ -8,13 +8,13 @@
  * and on the payment path never even a precise score.
  */
 
-import { ApiError, ENROLL_CONSISTENCY_FLOOR } from '@palma/shared';
-import { DeletePalmSchema, EnrollPalmRequestSchema, PalmSelfTestSchema } from '@palma/shared';
-import { decodeCode } from '@palma/biometrics';
+import { ApiError, ENROLL_CONSISTENCY_FLOOR } from '@palmwallet/shared';
+import { DeletePalmSchema, EnrollPalmRequestSchema, PalmSelfTestSchema } from '@palmwallet/shared';
+import { decodeCode } from '@palmwallet/biometrics';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../container.js';
 import { parseBody } from '../lib.js';
-import { verifyPin } from '../security/passwordHash.js';
+import { verifyPassword } from '../security/passwordHash.js';
 import { palmEnrolled } from './customerAuth.js';
 
 export function palmRoutes(app: FastifyInstance, ctx: AppContext): void {
@@ -142,12 +142,12 @@ export function palmRoutes(app: FastifyInstance, ctx: AppContext): void {
     };
   });
 
-  /** Delete (soft-revoke) the palm — requires PIN re-authentication. */
+  /** Delete (soft-revoke) the palm — requires password re-authentication. */
   app.delete('/api/v1/customers/me/palm', { onRequest: [ctx.auth.requireCustomer] }, async (req) => {
     const body = parseBody(req, DeletePalmSchema);
     const me = req.customer!;
-    if (!(await verifyPin(body.pin, me.pinHash))) {
-      throw new ApiError('AUTH_INVALID_CREDENTIALS', 'Wrong PIN');
+    if (!verifyPassword(body.password, me.passwordHash)) {
+      throw new ApiError('AUTH_INVALID_CREDENTIALS', 'Wrong password');
     }
     const rows = await ctx.templates.getBySubject('customer', me.id);
     for (const r of rows) await ctx.biometrics.deleteTemplate(r.templateId);

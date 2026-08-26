@@ -7,8 +7,8 @@
  * them anymore. decodeCode() is the single validation gate at the API edge.
  */
 
-import { ALGO_ID, TEMPLATE_BITS } from '@palma/shared';
-import type { PalmCodeDTO as PalmCodeWire } from '@palma/shared';
+import { ALGO_ID, TEMPLATE_BITS } from '@palmwallet/shared';
+import type { PalmCodeDTO as PalmCodeWire } from '@palmwallet/shared';
 import { base64ToBytes, bytesToBase64 } from './base64.js';
 
 export const TEMPLATE_BYTES = TEMPLATE_BITS / 8;

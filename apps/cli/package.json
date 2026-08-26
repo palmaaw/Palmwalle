@@ -1,12 +1,12 @@
 {
-  "name": "@palma/cli",
+  "name": "@palmwallet/cli",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@palma/api": "*",
-    "@palma/biometrics": "*",
-    "@palma/db": "*",
-    "@palma/shared": "*"
+    "@palmwallet/api": "*",
+    "@palmwallet/biometrics": "*",
+    "@palmwallet/db": "*",
+    "@palmwallet/shared": "*"
   }
 }

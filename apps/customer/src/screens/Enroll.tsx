@@ -12,8 +12,8 @@ import {
   SyntheticCaptureSource,
   demoSeed,
   extractFromGray
-} from '@palma/biometrics';
-import { ENROLL_FRAMES_REQUIRED } from '@palma/shared';
+} from '@palmwallet/biometrics';
+import { ENROLL_FRAMES_REQUIRED } from '@palmwallet/shared';
 
 import { api, ApiError } from '../api.js';
 import { PalmCapture } from '../PalmCapture.js';

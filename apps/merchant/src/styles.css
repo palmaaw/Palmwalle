@@ -1,4 +1,4 @@
-/* PalmPay POS — dark till theme, big touch targets. */
+/* Palm Wallet POS — dark till theme, big touch targets. */
 
 :root {
   --bg: #17111f;
@@ -339,35 +339,6 @@ section { display: flex; flex-direction: column; gap: 10px; }
 
 @keyframes sweep { from { top: 12%; } to { top: 86%; } }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.4);} 50% { box-shadow: 0 0 0 10px rgba(139,92,246,0);} }
-
-.picker-label { margin: 0; font-size: 13px; color: var(--muted); }
-
-.identity-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 9px;
-}
-
-.identity {
-  background: var(--panel-2);
-  border: 1.5px solid #443a58;
-  border-radius: 13px;
-  padding: 11px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  color: var(--ink);
-  cursor: pointer;
-  text-align: left;
-}
-
-.identity strong { font-size: 15px; }
-.identity small { color: var(--muted); font-size: 11.5px; }
-.identity.stranger { border-color: #6b3a44; }
-.identity.stranger strong { color: var(--bad); }
-
-.custom-slug { display: flex; gap: 8px; }
-.custom-slug input { flex: 1; font-size: 14px; padding: 10px 12px; }
 
 /* ---------- result ---------- */
 

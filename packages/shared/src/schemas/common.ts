@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { MAX_DEPOSIT_PIASTERS, MAX_PAYMENT_PIASTERS, MIN_DEPOSIT_PIASTERS, MIN_PAYMENT_PIASTERS, PHONE_REGEX, PIN_REGEX } from '../constants.js';
+import { MAX_DEPOSIT_PIASTERS, MAX_PAYMENT_PIASTERS, MIN_DEPOSIT_PIASTERS, MIN_PAYMENT_PIASTERS, PASSWORD_REGEX, PHONE_REGEX } from '../constants.js';
 
 export const PhoneSchema = z.string().regex(PHONE_REGEX, 'Must be an Egyptian mobile number (+2010/11/12/15 + 8 digits)');
-export const PinSchema = z.string().regex(PIN_REGEX, 'PIN must be 4-6 digits');
+export const PasswordSchema = z.string().regex(PASSWORD_REGEX, 'Password must be at least 6 characters');
 
 /** Integer piaster amounts; bounds enforced per-endpoint by the factories below. */
 const PiastersSchema = z.number().int();

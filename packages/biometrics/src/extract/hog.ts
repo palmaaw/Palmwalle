@@ -12,7 +12,7 @@
  * This is NOT a real palm-recognition algorithm — see docs/BIOMETRICS.md.
  */
 
-import { CELL_NORM_BETA, DESCRIPTOR_DIM } from '@palma/shared';
+import { CELL_NORM_BETA, DESCRIPTOR_DIM } from '@palmwallet/shared';
 import type { GrayImage } from '../types.js';
 
 export interface Gradients {

@@ -11,9 +11,9 @@
  * this service's boundaries — nothing else changes.
  */
 
-import { ApiError, newHumanRef, newId } from '@palma/shared';
-import type { CustomerRow, LedgerEntryRow, MerchantRow, PalmaDatabase, TransactionRow, WalletAccountRow } from '@palma/db';
-import { AccountRepo, AuditRepo, LedgerRepo, TransactionRepo } from '@palma/db';
+import { ApiError, newHumanRef, newId } from '@palmwallet/shared';
+import type { CustomerRow, LedgerEntryRow, MerchantRow, PalmWalletDatabase, TransactionRow, WalletAccountRow } from '@palmwallet/db';
+import { AccountRepo, AuditRepo, LedgerRepo, TransactionRepo } from '@palmwallet/db';
 
 export const SYSTEM_TOPUP_SOURCE = 'topup_source';
 
@@ -44,7 +44,7 @@ export interface RefundInput {
 }
 
 export class LedgerService {
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
   accounts(): AccountRepo {
     return new AccountRepo(this.db);

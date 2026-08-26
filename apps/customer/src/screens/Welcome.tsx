@@ -1,12 +1,12 @@
 /**
  * Welcome: brand hero + register/sign-in. Shared zod schemas from
- * @palma/shared validate on-device BEFORE hitting the API.
+ * @palmwallet/shared validate on-device BEFORE hitting the API.
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CustomerLoginSchema, RegisterCustomerSchema } from '@palma/shared';
+import { CustomerLoginSchema, RegisterCustomerSchema } from '@palmwallet/shared';
 
 import { api, ApiError } from '../api.js';
 import { useSession } from '../state.js';
@@ -18,7 +18,7 @@ export function Welcome(): JSX.Element {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,11 +27,11 @@ export function Welcome(): JSX.Element {
     setError(null);
 
     if (tab === 'register') {
-      const parsed = RegisterCustomerSchema.safeParse({ name: name.trim(), phone: phone.trim(), pin });
+      const parsed = RegisterCustomerSchema.safeParse({ name: name.trim(), phone: phone.trim(), password });
       if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'Check your details');
       try {
         setBusy(true);
-        const d = await api.register(parsed.data.name, parsed.data.phone, parsed.data.pin);
+        const d = await api.register(parsed.data.name, parsed.data.phone, parsed.data.password);
         signIn(d.accessToken, d.customer);
         navigate('/enroll/intro', { replace: true });
       } catch (err) {
@@ -40,11 +40,11 @@ export function Welcome(): JSX.Element {
         setBusy(false);
       }
     } else {
-      const parsed = CustomerLoginSchema.safeParse({ phone: phone.trim(), pin });
+      const parsed = CustomerLoginSchema.safeParse({ phone: phone.trim(), password });
       if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'Check your details');
       try {
         setBusy(true);
-        const d = await api.login(parsed.data.phone, parsed.data.pin);
+        const d = await api.login(parsed.data.phone, parsed.data.password);
         signIn(d.accessToken, d.customer);
         navigate(d.customer.palmEnrolled ? '/home' : '/enroll/intro', { replace: true });
       } catch (err) {
@@ -62,7 +62,7 @@ export function Welcome(): JSX.Element {
           ✋
         </div>
         <h1>
-          Palm<span>Pay</span>
+          Palm<span>Wallet</span>
         </h1>
         <p className="tagline">Pay with a wave of your palm</p>
         <p className="prototype-banner">⚠️ SIMULATED PROTOTYPE — no real money, demo biometrics</p>
@@ -98,12 +98,11 @@ export function Welcome(): JSX.Element {
         </label>
 
         <label>
-          PIN
+          Password
           <input
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-            placeholder="4–6 digits"
-            inputMode="numeric"
+            value={password}
+            onChange={(e) => setPassword(e.target.value.slice(0, 128))}
+            placeholder="At least 6 characters"
             type="password"
             autoComplete={tab === 'register' ? 'new-password' : 'current-password'}
           />
@@ -116,7 +115,8 @@ export function Welcome(): JSX.Element {
         </button>
 
         <p className="footnote">
-          Demo tip: sign in as a seeded customer — <b>+201000000001</b>, PIN <b>1234</b>.
+          Demo tip: create your own account above — or sign in as a seeded customer:{' '}
+          <b>+201000000001</b>, password <b>demo1234</b>.
         </p>
       </form>
     </div>

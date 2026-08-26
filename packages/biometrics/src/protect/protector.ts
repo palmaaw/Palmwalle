@@ -12,7 +12,7 @@
  * passwords. See docs/BIOMETRICS.md for the honest threat model.
  */
 
-import { TEMPLATE_BITS } from '@palma/shared';
+import { TEMPLATE_BITS } from '@palmwallet/shared';
 import type { DescriptorVector } from '../types.js';
 import { project, projectionMatrix } from './matrix.js';
 

@@ -1,5 +1,5 @@
 /**
- * Settings: profile, PIN change, palm re-enroll/delete, sign out, disclosures.
+ * Settings: profile, password change, palm re-enroll/delete, sign out, disclosures.
  */
 
 import { useState } from 'react';
@@ -34,12 +34,12 @@ export function Settings(): JSX.Element {
         {customer?.palmEnrolled ? <DeletePalm onDeleted={() => void signOutSoft()} /> : null}
       </section>
 
-      <ChangePin />
+      <ChangePassword />
 
       <section>
         <h3>About</h3>
         <div className="callout info">
-          ⚠️ PalmPay is a <b>SIMULATED PROTOTYPE</b>. Balances live in a demo ledger — no real money moves. Biometric
+          ⚠️ Palm Wallet is a <b>SIMULATED PROTOTYPE</b>. Balances live in a demo ledger — no real money moves. Biometric
           matching uses a research-grade simulated pipeline, not a certified SDK. Unlike a password, a biometric can't be
           rotated if compromised.
         </div>
@@ -69,9 +69,9 @@ export function Settings(): JSX.Element {
   }
 }
 
-function ChangePin(): JSX.Element {
-  const [currentPin, setCurrent] = useState('');
-  const [newPin, setNext] = useState('');
+function ChangePassword(): JSX.Element {
+  const [currentPassword, setCurrent] = useState('');
+  const [newPassword, setNext] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,30 +80,30 @@ function ChangePin(): JSX.Element {
     setMsg(null);
     setError(null);
     try {
-      await api.changePin(currentPin, newPin);
-      setMsg('PIN changed ✓');
+      await api.changePassword(currentPassword, newPassword);
+      setMsg('Password changed ✓');
       setCurrent('');
       setNext('');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not change PIN');
+      setError(err instanceof ApiError ? err.message : 'Could not change password');
     }
   }
 
   return (
     <section>
-      <h3>Change PIN</h3>
+      <h3>Change password</h3>
       <form onSubmit={(e) => void submit(e)} className="card form">
         <label>
-          Current PIN
-          <input value={currentPin} onChange={(e) => setCurrent(e.target.value.replace(/\D/g, '').slice(0, 6))} type="password" inputMode="numeric" />
+          Current password
+          <input value={currentPassword} onChange={(e) => setCurrent(e.target.value)} type="password" autoComplete="current-password" />
         </label>
         <label>
-          New PIN (4–6 digits)
-          <input value={newPin} onChange={(e) => setNext(e.target.value.replace(/\D/g, '').slice(0, 6))} type="password" inputMode="numeric" />
+          New password (min 6 characters)
+          <input value={newPassword} onChange={(e) => setNext(e.target.value.slice(0, 128))} type="password" autoComplete="new-password" />
         </label>
         {msg ? <div className="callout good">{msg}</div> : null}
         {error ? <div className="callout warn">{error}</div> : null}
-        <button className="primary">Update PIN</button>
+        <button className="primary">Update password</button>
       </form>
     </section>
   );
@@ -111,7 +111,7 @@ function ChangePin(): JSX.Element {
 
 function DeletePalm({ onDeleted }: { onDeleted(): void }): JSX.Element {
   const [open, setOpen] = useState(false);
-  const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -120,7 +120,7 @@ function DeletePalm({ onDeleted }: { onDeleted(): void }): JSX.Element {
     setError(null);
     setBusy(true);
     try {
-      await api.deletePalm(pin);
+      await api.deletePalm(password);
       setOpen(false);
       onDeleted();
     } catch (err) {
@@ -141,11 +141,17 @@ function DeletePalm({ onDeleted }: { onDeleted(): void }): JSX.Element {
             <h3>Delete palm?</h3>
             <p className="muted small">
               Your encrypted template will be revoked and palm payments disabled. You can enroll again anytime. Confirm
-              with your PIN.
+              with your password.
             </p>
             <label>
-              PIN
-              <input autoFocus value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} type="password" inputMode="numeric" />
+              Password
+              <input
+                autoFocus
+                value={password}
+                onChange={(e) => setPassword(e.target.value.slice(0, 128))}
+                type="password"
+                autoComplete="current-password"
+              />
             </label>
             {error ? <div className="callout warn">{error}</div> : null}
             <button className="danger solid" disabled={busy}>

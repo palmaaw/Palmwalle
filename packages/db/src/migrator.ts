@@ -9,7 +9,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { nowIso, PalmaDatabase } from './database.js';
+import { nowIso, PalmWalletDatabase } from './database.js';
 
 const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'migrations');
 
@@ -22,7 +22,7 @@ export function sha256Hex(input: string): string {
   return createHash('sha256').update(input, 'utf8').digest('hex');
 }
 
-export function runMigrations(db: PalmaDatabase): AppliedMigration[] {
+export function runMigrations(db: PalmWalletDatabase): AppliedMigration[] {
   db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       name       TEXT PRIMARY KEY,

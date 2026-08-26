@@ -1,7 +1,7 @@
 /** System-wide constants shared by API and frontends. */
 
 /** Identifier of the SIMULATED feature extractor + template scheme stamped on every descriptor. */
-export const ALGO_ID = 'palma-sim-hog-v1';
+export const ALGO_ID = 'palmwallet-sim-hog-v1';
 export const ALGO_VERSION = '1.0.0';
 
 /**
@@ -13,7 +13,7 @@ export const DESCRIPTOR_DIM = 160;
 export const CELL_NORM_BETA = 0;
 /** Population-mean sample count and the capture parameters it is averaged under. */
 export const POPULATION_MEAN_SAMPLES = 192;
-export const POPULATION_MEAN_SEED_NS = 'palma-population-mean-v2';
+export const POPULATION_MEAN_SEED_NS = 'palm-wallet-population-mean-v2';
 /** Protected template size in bits after random projection + sign binarization.
  *  This — not a feature descriptor — is the only biometric artifact that ever
  *  crosses the network: capture devices protect scans locally before upload. */
@@ -51,6 +51,7 @@ export const PROBE_FRAMES_REQUIRED = 5;
 
 /** Egyptian mobile numbers: +20 followed by 1[0125] and 8 digits. */
 export const PHONE_REGEX = /^\+201[0125]\d{8}$/;
-export const PIN_REGEX = /^\d{4,6}$/;
+/** Account passwords: any characters, minimum 6 (stored only as SHA-256 hashes). */
+export const PASSWORD_REGEX = /^[\s\S]{6,128}$/;
 
 export const CURRENCY = 'EGP' as const;

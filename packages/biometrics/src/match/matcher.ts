@@ -4,7 +4,7 @@
  * than guess).
  */
 
-import { AMBIGUITY_MARGIN, MATCH_GREY_FLOOR, MATCH_THRESHOLD, TEMPLATE_BITS } from '@palma/shared';
+import { AMBIGUITY_MARGIN, MATCH_GREY_FLOOR, MATCH_THRESHOLD, TEMPLATE_BITS } from '@palmwallet/shared';
 import type { BestMatchResult, CandidateTemplate } from '../types.js';
 
 const POP16 = buildPop16();

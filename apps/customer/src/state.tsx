@@ -11,7 +11,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { base64ToBytes } from '@palma/biometrics';
+import { base64ToBytes } from '@palmwallet/biometrics';
 
 import { api } from './api.js';
 import type { CustomerDTO } from './api.js';
@@ -19,7 +19,9 @@ import { setToken } from './api.js';
 
 interface Session {
   customer: CustomerDTO | null;
-  /** demoSlug names WHICH synthetic identity you are in dev mode. */
+  /** Synthetic identity for THIS session — derived from the signed-in phone,
+   *  so every registered customer (seeded or not) gets a stable demo palm that
+   *  survives new tabs and reloads. Empty while signed out. */
   demoSlug: string;
   /** Device-visible protection subkey (memory-only); null until fetched. */
   protectionKey: Uint8Array | null;
@@ -31,13 +33,8 @@ interface Session {
 
 const Ctx = createContext<Session | null>(null);
 
-function readSlug(): string {
-  return sessionStorage.getItem('palma.demoSlug') ?? '';
-}
-
 export function SessionProvider({ children }: { children: ReactNode }): JSX.Element {
   const [customer, setCustomerState] = useState<CustomerDTO | null>(null);
-  const [demoSlug, setDemoSlug] = useState(readSlug);
   const [protectionKey, setProtectionKey] = useState<Uint8Array | null>(null);
 
   const loadProtectionKey = useCallback((): void => {
@@ -49,7 +46,7 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
 
   useEffect(() => {
     // Silent re-auth on load; 401 just means "not signed in".
-    if (!localStorage.getItem('palma.token')) return;
+    if (!localStorage.getItem('palmwallet.token')) return;
     api
       .me()
       .then((d) => {
@@ -64,13 +61,13 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
       setToken(token);
       setCustomerState(c);
       loadProtectionKey();
-      // In synthetic mode the palm is derived from this slug — keep it stable
-      // per session and aligned with the phone you registered.
-      sessionStorage.setItem('palma.demoSlug', slugForPhone(c.phone));
-      setDemoSlug(slugForPhone(c.phone));
     },
     [loadProtectionKey]
   );
+
+  // Synthetic identity follows the session — any registered customer can
+  // enroll; nothing to cache, so it can never go stale or vanish in a new tab.
+  const demoSlug = customer ? slugForPhone(customer.phone) : '';
 
   const value = useMemo<Session>(
     () => ({
@@ -83,11 +80,9 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
         setToken(null);
         setCustomerState(null);
         setProtectionKey(null);
-        sessionStorage.removeItem('palma.demoSlug');
-        setDemoSlug('');
       },
       refresh: async () => {
-        if (!localStorage.getItem('palma.token')) return;
+        if (!localStorage.getItem('palmwallet.token')) return;
         try {
           const d = await api.me();
           setCustomerState(d.customer);

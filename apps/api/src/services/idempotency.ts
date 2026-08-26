@@ -13,9 +13,9 @@
  * single execution; the DB row provides durability across restarts.
  */
 
-import { ApiError, canonicalJson } from '@palma/shared';
-import type { PalmaDatabase } from '@palma/db';
-import { IdempotencyRepo, sha256Hex } from '@palma/db';
+import { ApiError, canonicalJson } from '@palmwallet/shared';
+import type { PalmWalletDatabase } from '@palmwallet/db';
+import { IdempotencyRepo, sha256Hex } from '@palmwallet/db';
 
 export interface StoredOutcome<T> {
   data: T;
@@ -31,7 +31,7 @@ export interface IdempotencyResult<T> {
 export class IdempotencyService {
   private readonly inflight = new Map<string, Promise<StoredOutcome<unknown>>>();
 
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
   repo(): IdempotencyRepo {
     return new IdempotencyRepo(this.db);

@@ -12,15 +12,15 @@
 │  ON-DEVICE protection:     │        │  ON-DEVICE protection:     │
 │   fuse + project → 1024-bit│        │   fuse + project → 1024-bit│
 │   one-way code             │        │   one-way code             │
-│  wallet · history · PIN    │        │                            │
+│  wallet · history · password│        │                            │
 └─────────────┬──────────────┘        └─────────────┬──────────────┘
               │  protected code only (128 B)        │  protected code only
               │  NEVER images, NEVER descriptors    │  (128 B)
               ▼                                     ▼
         ┌─────────────────────────────────────────────────┐
-        │            @palma/api  — Fastify :8787          │
+        │            @palmwallet/api  — Fastify :8787          │
         │                                                 │
-        │  zod schemas (@palma/shared) = wire contract    │
+        │  zod schemas (@palmwallet/shared) = wire contract    │
         │  auth: HS256 JWT + scrypt PINs + login throttle │
         │  replay guard: freshness → payload binding →    │
         │                response replay (+inflight dedup)│
@@ -39,7 +39,7 @@
         └───────────────┬──────────────────┬──────────────┘
                         ▼                  ▼
              ┌──────────────────┐  ┌───────────────────────────┐
-             │  @palma/db       │  │  @palma/biometrics  ⚠️    │
+             │  @palmwallet/db       │  │  @palmwallet/biometrics  ⚠️    │
              │  node:sqlite WAL │  │  SIMULATED pipeline:      │
              │  checksummed     │  │  device-side protect →    │
              │  migrations      │  │  seal(GCM) → Hamming      │
@@ -61,7 +61,7 @@ step between packages) via `exports: "./src/index.ts"` + tsx/vite.
 ## The boundaries that matter
 
 1. **Biometric layer vs payment layer.** Everything about palms lives behind the
-   `BiometricService` interface (`@palma/biometrics` + `SqliteTemplateStore`).
+   `BiometricService` interface (`@palmwallet/biometrics` + `SqliteTemplateStore`).
    The interface accepts only ALREADY-PROTECTED codes — the server has no code
    path that turns vectors into templates, so descriptors cannot be smuggled in.
 2. **Device-side protection.** Frames are extracted AND projected into a one-way
@@ -76,7 +76,7 @@ step between packages) via `exports: "./src/index.ts"` + tsx/vite.
    a transaction — enforced by `withTransaction()` rejecting Promise-returning
    callbacks (this was a real bug class during development).
 4. **Wire truth in one place.** Every request/response shape is a zod schema in
-   `@palma/shared`, imported verbatim by the API and both PWAs.
+   `@palmwallet/shared`, imported verbatim by the API and both PWAs.
 5. **Simulated rails behind adapters.** InstaPay/Vodafone Cash are registry
    entries; licensed integrations replace them without touching services.
 
@@ -101,7 +101,7 @@ POS's perspective "not recognized" is a normal outcome to show and retry.
 
 ## Storage
 
-Single SQLite file (`DATABASE_PATH`, default `./data/palma.db`), WAL mode,
+Single SQLite file (`DATABASE_PATH`, default `./data/palm-wallet.db`), WAL mode,
 foreign keys on, busy_timeout 5 s. Migrations are checksummed; drift refuses to
 boot. Tables: customers, merchants, wallet_accounts, biometric_templates,
 transactions, ledger_entries, idempotency_records, audit_log (+ `_migrations`).
@@ -118,8 +118,8 @@ transactions, ledger_entries, idempotency_records, audit_log (+ `_migrations`).
   tokens yet — documented gap.
 - Secrets: env-only in production (fail-fast); DEMO_MODE persists generated dev
   secrets to `data/.dev-secrets.json` for restart stability.
-- Logging: recursive redaction of pin/secret/token/descriptor/vec/ciphertext keys.
-- Palm delete requires PIN re-auth. Re-enrollment supersedes atomically.
+- Logging: recursive redaction of password/pin/secret/token/descriptor/vec/ciphertext keys.
+- Palm delete requires password re-auth. Re-enrollment supersedes atomically.
 - Merchant registration is guarded by `x-setup-token` (dev bootstrap only).
 
 ## Testing strategy

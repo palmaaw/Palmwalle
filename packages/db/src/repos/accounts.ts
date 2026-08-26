@@ -1,5 +1,5 @@
-import { newId } from '@palma/shared';
-import { nowIso, PalmaDatabase } from '../database.js';
+import { newId } from '@palmwallet/shared';
+import { nowIso, PalmWalletDatabase } from '../database.js';
 import type { OwnerType, WalletAccountRow } from '../rows.js';
 
 const COLS =
@@ -7,7 +7,7 @@ const COLS =
   'balance_piasters AS balancePiasters, status, created_at AS createdAt, updated_at AS updatedAt';
 
 export class AccountRepo {
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
   createForOwner(a: { ownerId: string; ownerType: OwnerType; kind?: string }): WalletAccountRow {
     const ts = nowIso();

@@ -25,7 +25,7 @@ import {
   MATCH_THRESHOLD,
   TEMPLATE_BITS,
   newId
-} from '@palma/shared';
+} from '@palmwallet/shared';
 import { bestMatch } from './match/matcher.js';
 import { decodeCode } from './codes.js';
 import { bytesToBase64 } from './base64.js';

@@ -3,7 +3,7 @@
  */
 
 const BASE = '/api/v1';
-const TOKEN_KEY = 'palma.pos.token';
+const TOKEN_KEY = 'palm-wallet.pos.token';
 
 export class ApiError extends Error {
   constructor(
@@ -35,7 +35,7 @@ async function req<T>(method: 'GET' | 'POST', path: string, body?: unknown, extr
   try {
     res = await fetch(`${BASE}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch {
-    throw new ApiError('NETWORK', 'Cannot reach PalmPay — check your connection', 0);
+    throw new ApiError('NETWORK', 'Cannot reach Palm Wallet — check your connection', 0);
   }
 
   const envelope = (await res.json().catch(() => null)) as
@@ -129,13 +129,18 @@ async function authorize(amountPiasters: number, probe: unknown): Promise<Author
 
 export const api = {
   /** Dev bootstrap — guarded server-side by X-Setup-Token (demo only). */
-  registerMerchant: (setupToken: string, name: string, code: string, phone: string, pin: string) =>
-    req<{ accessToken: string; merchant: MerchantDTO }>('POST', '/merchants/register', { name, code, phone, pin }, {
-      'x-setup-token': setupToken
-    }),
+  registerMerchant: (setupToken: string, name: string, code: string, phone: string, password: string) =>
+    req<{ accessToken: string; merchant: MerchantDTO }>(
+      'POST',
+      '/merchants/register',
+      { name, code, phone, password },
+      {
+        'x-setup-token': setupToken
+      }
+    ),
 
-  login: (identifier: string, pin: string) =>
-    req<{ accessToken: string; merchant: MerchantDTO }>('POST', '/auth/merchant/login', { identifier, pin }),
+  login: (identifier: string, password: string) =>
+    req<{ accessToken: string; merchant: MerchantDTO }>('POST', '/auth/merchant/login', { identifier, password }),
 
   me: () => req<{ merchant: MerchantDTO }>('GET', '/merchants/me'),
 

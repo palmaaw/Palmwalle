@@ -5,7 +5,7 @@
  * in our own code cannot silently satisfy itself.
  */
 
-import { PalmaDatabase } from './database.js';
+import { PalmWalletDatabase } from './database.js';
 
 export interface InvariantCheck {
   name: string;
@@ -18,7 +18,7 @@ export interface InvariantReport {
   checks: InvariantCheck[];
 }
 
-export function collectInvariants(db: PalmaDatabase): InvariantReport {
+export function collectInvariants(db: PalmWalletDatabase): InvariantReport {
   const checks: InvariantCheck[] = [];
   const add = (name: string, ok: boolean, detail: string): void => {
     checks.push({ name, ok, detail });
@@ -101,7 +101,7 @@ export function collectInvariants(db: PalmaDatabase): InvariantReport {
 }
 
 /** Hard-fail variant used by tests and the seeder. */
-export function assertInvariants(db: PalmaDatabase): InvariantReport {
+export function assertInvariants(db: PalmWalletDatabase): InvariantReport {
   const report = collectInvariants(db);
   if (!report.ok) {
     const failed = report.checks.filter((c) => !c.ok).map((c) => `${c.name} (${c.detail})`);

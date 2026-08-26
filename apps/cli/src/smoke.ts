@@ -18,7 +18,7 @@ function check(name: string, pass: boolean, note = ''): void {
 }
 
 async function main(): Promise<void> {
-  console.log('PalmPay smoke (SIMULATED prototype)\n');
+  console.log('Palm Wallet smoke (SIMULATED prototype)\n');
   const server = await bootServer(':memory:');
   try {
     const { base } = server;
@@ -32,7 +32,7 @@ async function main(): Promise<void> {
 
     const phone = '+2010' + String(Math.floor(Math.random() * 1e8)).padStart(8, '0');
     const reg = await call(base, 'POST', '/api/v1/customers/register', {
-      body: { name: 'Smoke Tester', phone, pin: '1234' }
+      body: { name: 'Smoke Tester', phone, password: 'smoke123' }
     });
     const token = (reg.data?.accessToken as string) ?? '';
     check('customer register → token', reg.ok && token.length > 20);
@@ -60,7 +60,7 @@ async function main(): Promise<void> {
 
     const merch = await call(base, 'POST', '/api/v1/merchants/register', {
       setupToken: server.ctx.config.devSetupToken,
-      body: { name: 'Smoke Shop', code: 'SMOKE-SHOP', phone: '+201200009999', pin: '2468' }
+      body: { name: 'Smoke Shop', code: 'SMOKE-SHOP', phone: '+201200009999', password: 'smokeshop1' }
     });
     const merchToken = (merch.data?.accessToken as string) ?? '';
     check('merchant bootstrap → token', merch.ok && merchToken.length > 20);

@@ -3,7 +3,7 @@
  * a production system would replace these with proper ops dashboards.
  */
 
-import { ApiError } from '@palma/shared';
+import { ApiError } from '@palmwallet/shared';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../container.js';
 
@@ -16,7 +16,7 @@ function requireDevToken(ctx: AppContext) {
 
 export function devRoutes(app: FastifyInstance, ctx: AppContext): void {
   app.get('/api/v1/dev/invariants', { onRequest: [requireDevToken(ctx)] }, async () => {
-    const { collectInvariants } = await import('@palma/db');
+    const { collectInvariants } = await import('@palmwallet/db');
     const report = collectInvariants(ctx.db);
     return { ok: true as const, data: report };
   });

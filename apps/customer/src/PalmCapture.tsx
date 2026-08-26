@@ -1,7 +1,7 @@
 /**
  * PalmCapture — the live capture surface used by enrollment and self-test.
  *
- * Two modes, ONE extraction pipeline (@palma/biometrics runs identically in
+ * Two modes, ONE extraction pipeline (@palmwallet/biometrics runs identically in
  * browser and Node):
  *  - 'camera':    getUserMedia → hidden canvas → rgbaToGray
  *  - 'synthetic': dev-only procedural palm generator (no camera needed)
@@ -22,9 +22,9 @@ import {
   rgbaToGray,
   SyntheticCaptureSource,
   demoSeed
-} from '@palma/biometrics';
-import type { DescriptorVector, GrayImage, PalmPresence } from '@palma/biometrics';
-import type { QualityHint, QualityReportDTO } from '@palma/shared';
+} from '@palmwallet/biometrics';
+import type { DescriptorVector, GrayImage, PalmPresence } from '@palmwallet/biometrics';
+import type { QualityHint, QualityReportDTO } from '@palmwallet/shared';
 
 export type CaptureMode = 'camera' | 'synthetic';
 

@@ -1,10 +1,11 @@
 /**
  * POS session + the synthetic-probe contract.
  *
- * ⚠️ SIMULATED MODE CONTRACT: without a palm scanner, the POS synthesizes
- * probes from demo identity slugs (the SAME demoSeed slugs the customer app
- * and seeder use). The seeded identities are quick-picks; a custom palm ID can
- * be typed to scan any other enrolled synthetic customer.
+ * ⚠️ SIMULATED MODE CONTRACT: without a palm scanner, the POS synthesizes a
+ * probe from whatever palm is "presented". The till is IDENTITY-BLIND: it
+ * never picks who is paying — it scans, protects the scan on device, and lets
+ * the server identify the palm 1:N against enrolled templates (exactly like
+ * real reader hardware).
  *
  * DEVICE-SIDE PROTECTION: the reader fuses probe frames and projects them into
  * a one-way code with the session's protection subkey BEFORE upload — exactly
@@ -14,7 +15,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { buildProbeCode, base64ToBytes, demoSeed, extractFromGray, SyntheticCaptureSource } from '@palma/biometrics';
+import { buildProbeCode, base64ToBytes, demoSeed, extractFromGray, SyntheticCaptureSource } from '@palmwallet/biometrics';
 
 import { api } from './api.js';
 import type { MerchantDTO } from './api.js';
@@ -42,7 +43,7 @@ export function PosProvider({ children }: { children: ReactNode }): JSX.Element 
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem('palma.pos.token')) return;
+    if (!localStorage.getItem('palm-wallet.pos.token')) return;
     api
       .me()
       .then((d) => {
@@ -79,23 +80,27 @@ export function usePos(): PosSession {
   return s;
 }
 
-/** Seeded demo identities — MUST match apps/cli/src/seed.ts slugs. */
-export const DEMO_IDENTITIES = [
-  { slug: 'aya', name: 'Aya Hassan', phone: '+201000000001', note: 'EGP 2,500' },
-  { slug: 'omar', name: 'Omar Khaled', phone: '+201000000002', note: 'EGP 800' },
-  { slug: 'nour', name: 'Nour Adel', phone: '+201000000003', note: 'EGP 0 — insufficient funds demo' }
-] as const;
+/**
+ * Palms the SIMULATED reader may see presented — slugs MUST match
+ * apps/cli/src/seed.ts. The till itself never knows these names; the server
+ * identifies whatever comes off the reader.
+ */
+const PRESENTED_PALMS = ['aya', 'omar', 'nour'] as const;
+/** Occasionally an unenrolled palm walks up — rejection is a normal outcome. */
+const UNENROLLED_CHANCE = 0.12;
 
 /**
- * Build a wire-shape probe for a demo identity slug: frames fused + protected
- * ON DEVICE with the session's subkey. Null until the key has loaded — callers
- * keep scan buttons disabled meanwhile.
+ * Read one palm: returns a wire-shape probe built ON DEVICE from fused frames
+ * of whichever palm was just presented. Null until the protection key has
+ * loaded — callers keep the scan button disabled meanwhile.
  */
-export function useProbeBuilder(): ((slug: string) => { code: { algoId: string; version: number; bits: string }; quality: unknown }) | null {
+export function usePalmReader(): (() => { code: { algoId: string; version: number; bits: string }; quality: unknown }) | null {
   const { protectionKey } = usePos();
   return useMemo(() => {
     if (!protectionKey) return null;
-    return (slug: string) => {
+    return () => {
+      const stranger = Math.random() < UNENROLLED_CHANCE;
+      const slug = stranger ? 'unknown-stranger' : PRESENTED_PALMS[Math.floor(Math.random() * PRESENTED_PALMS.length)]!;
       const src = new SyntheticCaptureSource(demoSeed(slug), { size: 128 });
       const vectors = src.captureProbeFrames().map((f) => extractFromGray(f).vector);
       return {

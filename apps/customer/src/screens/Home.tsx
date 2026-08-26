@@ -5,9 +5,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { formatEGP, toPiasters } from '@palma/shared';
-import type { DepositSource } from '@palma/shared';
-import { MIN_DEPOSIT_PIASTERS, MAX_DEPOSIT_PIASTERS } from '@palma/shared';
+import { formatEGP, toPiasters } from '@palmwallet/shared';
+import type { DepositSource } from '@palmwallet/shared';
+import { MIN_DEPOSIT_PIASTERS, MAX_DEPOSIT_PIASTERS } from '@palmwallet/shared';
 
 import { api, ApiError } from '../api.js';
 import type { TransactionDTO, WalletDTO } from '../api.js';
@@ -55,7 +55,7 @@ export function Home(): JSX.Element {
           🖐️ Enroll your palm to start paying at shops →
         </Link>
       ) : (
-        <div className="palm-chip">🖐️ Palm ready — wave to pay at any PalmPay counter</div>
+        <div className="palm-chip">🖐️ Palm ready — wave to pay at any Palm Wallet counter</div>
       )}
 
       <button className="primary" onClick={() => setSheetOpen(true)}>

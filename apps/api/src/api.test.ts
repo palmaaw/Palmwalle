@@ -14,8 +14,8 @@ import {
   MAX_PAYMENT_PIASTERS,
   MIN_DEPOSIT_PIASTERS,
   MIN_PAYMENT_PIASTERS
-} from '@palma/shared';
-import type { QualityReportDTO } from '@palma/shared';
+} from '@palmwallet/shared';
+import type { QualityReportDTO } from '@palmwallet/shared';
 import {
   SyntheticCaptureSource,
   buildEnrollmentCode,
@@ -23,7 +23,7 @@ import {
   demoSeed,
   extractFromGray,
   renderSyntheticPalm
-} from '@palma/biometrics';
+} from '@palmwallet/biometrics';
 import type { AppConfig } from './config.js';
 import { buildContext } from './container.js';
 import type { AppContext } from './container.js';
@@ -114,11 +114,11 @@ function expectOk(res: Res): Record<string, unknown> {
   return body.data ?? {};
 }
 
-async function registerCustomer(name: string, phone: string, pin = '1234'): Promise<{ token: string; id: string }> {
+async function registerCustomer(name: string, phone: string, password = 'test1234'): Promise<{ token: string; id: string }> {
   const res = await app.inject({
     method: 'POST',
     url: '/api/v1/customers/register',
-    payload: { name, phone, pin }
+    payload: { name, phone, password }
   });
   const data = expectOk(res);
   const customer = data.customer as { id: string };
@@ -152,7 +152,7 @@ describe('customer registration & login', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/v1/customers/register',
-      payload: { name: 'Bad Phone', phone: '+2012345678901', pin: '1234' }
+      payload: { name: 'Bad Phone', phone: '+2012345678901', password: 'test1234' }
     });
     expect(res.statusCode).toBe(400);
     expect(res.json().error.code).toBe('VALIDATION_ERROR');
@@ -162,24 +162,34 @@ describe('customer registration & login', () => {
     const phone = uniqPhone();
     const first = await registerCustomer('First', phone);
     expect(first.token).toBeTruthy();
-    const dup = await app.inject({ method: 'POST', url: '/api/v1/customers/register', payload: { name: 'Dup', phone, pin: '1234' } });
+    const dup = await app.inject({ method: 'POST', url: '/api/v1/customers/register', payload: { name: 'Dup', phone, password: 'test1234' } });
     expect(dup.statusCode).toBe(409);
     expect(dup.json().error.code).toBe('ACCOUNT_EXISTS');
   });
 
-  it('throttles repeated wrong PINs then accepts the right one later', async () => {
+  it('throttles repeated wrong passwords then accepts the right one later', async () => {
     const phone = uniqPhone();
-    await registerCustomer('Throttled', phone, '9999');
+    await registerCustomer('Throttled', phone, 'right-passphrase');
     for (let i = 0; i < 5; i++) {
-      const bad = await app.inject({ method: 'POST', url: '/api/v1/auth/customer/login', payload: { phone, pin: '1111' } });
+      const bad = await app.inject({ method: 'POST', url: '/api/v1/auth/customer/login', payload: { phone, password: 'wrong-password' } });
       expect(bad.statusCode).toBe(401);
     }
-    const sixth = await app.inject({ method: 'POST', url: '/api/v1/auth/customer/login', payload: { phone, pin: '9999' } });
+    const sixth = await app.inject({ method: 'POST', url: '/api/v1/auth/customer/login', payload: { phone, password: 'right-passphrase' } });
     expect(sixth.statusCode).toBe(429);
     expect(sixth.json().error.code).toBe('RATE_LIMITED');
     ctx.throttle.clear(`cust:${phone}:127.0.0.1`);
-    const good = await app.inject({ method: 'POST', url: '/api/v1/auth/customer/login', payload: { phone, pin: '9999' } });
+    const good = await app.inject({ method: 'POST', url: '/api/v1/auth/customer/login', payload: { phone, password: 'right-passphrase' } });
     expect(good.statusCode).toBe(200);
+  });
+
+  it('rejects passwords shorter than 6 characters', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/customers/register',
+      payload: { name: 'Short Pass', phone: uniqPhone(), password: '12345' }
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('VALIDATION_ERROR');
   });
 
   it('requires auth on /me', async () => {
@@ -273,7 +283,7 @@ describe('palm lifecycle', () => {
     const ok = await authed(
       app.inject({ method: 'GET', url: '/api/v1/biometrics/protection-key', headers: bearer(token) })
     ) as unknown as { algoId: string; bits: number; protectionKeyB64: string };
-    expect(ok.algoId).toBe('palma-sim-hog-v1');
+    expect(ok.algoId).toBe('palmwallet-sim-hog-v1');
     expect(ok.bits).toBe(1024);
     expect(Buffer.from(ok.protectionKeyB64, 'base64').length).toBe(32);
     // Purpose separation: the device-visible subkey must never be the raw
@@ -288,7 +298,7 @@ describe('palm lifecycle', () => {
       url: '/api/v1/customers/me/palm/enroll',
       headers: bearer(token),
       payload: {
-        code: { algoId: 'palma-sim-hog-v1', version: 1, bits: Buffer.alloc(10).toString('base64') },
+        code: { algoId: 'palmwallet-sim-hog-v1', version: 1, bits: Buffer.alloc(10).toString('base64') },
         quality: QUALITY,
         consistencyScore: 0.9,
         capture: { source: 'synthetic', frames: 5 }
@@ -335,20 +345,20 @@ describe('palm lifecycle', () => {
     expect(selfBad.decision).toBe('no_match');
   });
 
-  it('deletes the palm only with the right PIN', async () => {
+  it('deletes the palm only with the right password', async () => {
     const wrong = await app.inject({
       method: 'DELETE',
       url: '/api/v1/customers/me/palm',
       headers: bearer(token),
-      payload: { pin: '0000' }
+      payload: { password: 'wrong-password' }
     });
     expect(wrong.statusCode).toBe(401);
-    // Re-enroll was done in previous test; delete with correct PIN.
+    // Re-enroll was done in previous test; delete with correct password.
     const ok = await app.inject({
       method: 'DELETE',
       url: '/api/v1/customers/me/palm',
       headers: bearer(token),
-      payload: { pin: '1234' }
+      payload: { password: 'test1234' }
     });
     expect(ok.statusCode).toBe(200);
     expect(ok.json().data.deleted).toBe(true);
@@ -371,7 +381,7 @@ describe('scan & pay end-to-end', () => {
       method: 'POST',
       url: '/api/v1/merchants/register',
       headers: { 'x-setup-token': 'setup-test-token' },
-      payload: { name: 'Test Shop', code: MERCHANT_CODE, phone: uniqPhone(), pin: '2468' }
+      payload: { name: 'Test Shop', code: MERCHANT_CODE, phone: uniqPhone(), password: 'shop-secret-1' }
     });
     expect(setupRes.statusCode).toBe(200);
     merchToken = (setupRes.json().data as { accessToken: string }).accessToken;
@@ -380,7 +390,7 @@ describe('scan & pay end-to-end', () => {
       method: 'POST',
       url: '/api/v1/merchants/register',
       headers: { 'x-setup-token': 'setup-test-token' },
-      payload: { name: 'Other Shop', code: 'OTHER-SHOP', phone: uniqPhone(), pin: '2468' }
+      payload: { name: 'Other Shop', code: 'OTHER-SHOP', phone: uniqPhone(), password: 'other-secret' }
     });
     otherMerchToken = (other.json().data as { accessToken: string }).accessToken;
 
@@ -388,7 +398,7 @@ describe('scan & pay end-to-end', () => {
     const guarded = await app.inject({
       method: 'POST',
       url: '/api/v1/merchants/register',
-      payload: { name: 'X', code: 'NO-TOKEN', phone: uniqPhone(), pin: '1234' }
+      payload: { name: 'X', code: 'NO-TOKEN', phone: uniqPhone(), password: 'test1234' }
     });
     expect(guarded.statusCode).toBe(403);
 
@@ -553,7 +563,7 @@ describe('scan & pay end-to-end', () => {
 });
 
 describe('privacy greps', () => {
-  it('never leaks descriptors, ciphertext or PIN material in any response', async () => {
+  it('never leaks descriptors, ciphertext or password material in any response', async () => {
     // Exercise a broad slice of the surface and collect bodies.
     const bodies: string[] = [];
     const push = async (p: Promise<Res>): Promise<void> => {
@@ -578,7 +588,19 @@ describe('privacy greps', () => {
     await push(app.inject({ method: 'GET', url: '/api/v1/customers/me/palm/status', headers: bearer(reg.token) }));
     await push(app.inject({ method: 'GET', url: '/api/v1/customers/me/transactions', headers: bearer(reg.token) }));
 
-    const forbidden = ['pin_hash', 'pinHash', 'ciphertext', '"vec"', 'descriptor', 'key_id', 'keyId', 'protectionKey', 'storageKey'];
+    const forbidden = [
+      'password_hash',
+      'passwordHash',
+      'pin_hash',
+      'pinHash',
+      'ciphertext',
+      '"vec"',
+      'descriptor',
+      'key_id',
+      'keyId',
+      'protectionKey',
+      'storageKey'
+    ];
     for (const body of bodies) {
       for (const needle of forbidden) {
         expect(body.includes(needle), `response leaked "${needle}": ${body.slice(0, 300)}`).toBe(false);

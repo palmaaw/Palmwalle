@@ -1,6 +1,6 @@
 {
-  "name": "PalmPay (PROTOTYPE)",
-  "short_name": "PalmPay",
+  "name": "Palm Wallet (PROTOTYPE)",
+  "short_name": "Palm Wallet",
   "description": "SIMULATED palm-payment wallet prototype. Not a real financial service.",
   "start_url": "/",
   "display": "standalone",

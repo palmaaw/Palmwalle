@@ -93,7 +93,7 @@ export function rngFromString(str: string): Rng {
 export function rngFromBytes(key: Uint8Array): Rng {
   const words: number[] = [];
   for (let i = 0; i < 4; i++) {
-    words.push(hashString(`palma-key-seed:${i}:${toHex(key)}`));
+    words.push(hashString(`palm-wallet-key-seed:${i}:${toHex(key)}`));
   }
   return makeRng(words[0]!, words[1]!, words[2]!, words[3]!);
 }

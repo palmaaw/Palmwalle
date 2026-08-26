@@ -19,7 +19,7 @@
 import {
   DESCRIPTOR_DIM,
   POPULATION_MEAN_SAMPLES, POPULATION_MEAN_SEED_NS
-} from '@palma/shared';
+} from '@palmwallet/shared';
 import { boxBlur, centerCropSquare, resizeBilinear, subtractImages } from '../image/gray.js';
 import { normalizeIllumination } from '../image/normalize.js';
 import type { PalmPresence } from '../image/presence.js';

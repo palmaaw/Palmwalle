@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PaymentAmountSchema, PhoneSchema, PinSchema, RequestIdSchema, TimestampSchema } from './common.js';
+import { PaymentAmountSchema, PasswordSchema, PhoneSchema, RequestIdSchema, TimestampSchema } from './common.js';
 import { PalmProbeSchema } from './biometric.js';
 
 export const RegisterMerchantSchema = z.object({
@@ -10,7 +10,7 @@ export const RegisterMerchantSchema = z.object({
     .max(24)
     .regex(/^[A-Z0-9-]+$/, 'Merchant code is uppercase letters, digits and dashes'),
   phone: PhoneSchema,
-  pin: PinSchema,
+  password: PasswordSchema,
   displayName: z.string().min(1).max(60).optional()
 });
 export type RegisterMerchantDTO = z.infer<typeof RegisterMerchantSchema>;
@@ -18,7 +18,7 @@ export type RegisterMerchantDTO = z.infer<typeof RegisterMerchantSchema>;
 export const MerchantLoginSchema = z.object({
   /** Either the merchant code or the registered phone. */
   identifier: z.string().min(3).max(40),
-  pin: PinSchema
+  password: PasswordSchema
 });
 
 /**

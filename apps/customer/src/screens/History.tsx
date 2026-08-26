@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 
-import { formatEGP } from '@palma/shared';
+import { formatEGP } from '@palmwallet/shared';
 
 import { api } from '../api.js';
 import type { TransactionDTO } from '../api.js';

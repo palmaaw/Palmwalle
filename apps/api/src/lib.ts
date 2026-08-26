@@ -1,6 +1,6 @@
 /** Small shared helpers for route handlers. */
 
-import { ApiError } from '@palma/shared';
+import { ApiError } from '@palmwallet/shared';
 import type { ZodTypeAny, z } from 'zod';
 
 /** Validate a request body against a shared zod schema -> VALIDATION_ERROR. */

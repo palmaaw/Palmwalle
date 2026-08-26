@@ -1,40 +1,35 @@
 /**
- * PIN hashing with scrypt + timing-safe verification.
+ * Password hashing with SALTED scrypt + timing-safe verification.
  *
- * PINs are the account credential for this prototype; they are NEVER stored in
- * plaintext and NEVER logged. Stored format: scrypt$N$r$p$saltB64$hashB64.
+ * Passwords are the account credential for this prototype; they are NEVER
+ * stored in plaintext and NEVER logged. Stored format:
+ *   scrypt$N$r$p$saltB64$hashB64
+ * The per-password random salt defeats rainbow tables; scrypt's memory cost
+ * keeps GPU/ASIC brute-force expensive if the database leaks.
  * (Real deployments should use Argon2id and review KDF work factors.)
  */
 
-import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
-import { promisify } from 'node:util';
-
-const scrypt = promisify(scryptCb) as (
-  password: string | Buffer,
-  salt: Buffer,
-  keylen: number,
-  options: { N: number; r: number; p: number }
-) => Promise<Buffer>;
+import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
 const N = 16384;
 const R = 8;
 const P = 1;
 const KEYLEN = 32;
 
-export async function hashPin(pin: string): Promise<string> {
+/** Synchronous on purpose — login/register paths pay one ~50ms KDF pass,
+ *  and call sites stay await-free. */
+export function hashPassword(password: string): string {
   const salt = randomBytes(16);
-  const key = await scrypt(pin, salt, KEYLEN, { N, r: R, p: P });
+  const key = scryptSync(password, salt, KEYLEN, { N, r: R, p: P });
   return `scrypt$${N}$${R}$${P}$${salt.toString('base64')}$${key.toString('base64')}`;
 }
 
-export async function verifyPin(pin: string, stored: string): Promise<boolean> {
+export function verifyPassword(password: string, stored: string): boolean {
   try {
-    const parts = stored.split('$');
-    const [scheme, nStr, rStr, pStr, saltB64, hashB64] = parts;
+    const [scheme, nStr, rStr, pStr, saltB64, hashB64] = stored.split('$');
     if (scheme !== 'scrypt' || !saltB64 || !hashB64) return false;
-    const salt = Buffer.from(saltB64, 'base64');
     const expected = Buffer.from(hashB64, 'base64');
-    const actual = await scrypt(pin, salt, expected.length, {
+    const actual = scryptSync(password, Buffer.from(saltB64, 'base64'), expected.length, {
       N: Number(nStr),
       r: Number(rStr),
       p: Number(pStr)

@@ -10,8 +10,8 @@
 import {
   ENROLL_FRAMES_REQUIRED,
   PROBE_FRAMES_REQUIRED
-} from '@palma/shared';
-import type { PalmCodeDTO, QualityReportDTO } from '@palma/shared';
+} from '@palmwallet/shared';
+import type { PalmCodeDTO, QualityReportDTO } from '@palmwallet/shared';
 import {
   SyntheticCaptureSource,
   base64ToBytes,
@@ -21,8 +21,8 @@ import {
   cosine,
   demoSeed,
   extractFromGray
-} from '@palma/biometrics';
-import type { DescriptorVector } from '@palma/biometrics';
+} from '@palmwallet/biometrics';
+import type { DescriptorVector } from '@palmwallet/biometrics';
 
 export const DEMO_QUALITY: QualityReportDTO = {
   score: 0.92,
@@ -144,8 +144,8 @@ export function failingRequestId(): string {
 // Embedded server harness (real HTTP over loopback, ephemeral port).
 // ---------------------------------------------------------------------------
 
-import { buildApp, buildContext, loadConfig } from '@palma/api';
-import type { AppContext } from '@palma/api';
+import { buildApp, buildContext, loadConfig } from '@palmwallet/api';
+import type { AppContext } from '@palmwallet/api';
 
 export interface BootedServer {
   base: string;

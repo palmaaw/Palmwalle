@@ -8,8 +8,8 @@
  * guarantees at most one ACTIVE template per subject.
  */
 
-import type { SealedTemplate, TemplateStore, TemplateStoreRow } from '@palma/biometrics';
-import { nowIso, PalmaDatabase } from '../database.js';
+import type { SealedTemplate, TemplateStore, TemplateStoreRow } from '@palmwallet/biometrics';
+import { nowIso, PalmWalletDatabase } from '../database.js';
 import type { TemplateRow } from '../rows.js';
 
 const COLS =
@@ -42,7 +42,7 @@ interface InsertArgs {
 }
 
 export class SqliteTemplateStore implements TemplateStore {
-  constructor(private readonly db: PalmaDatabase) {}
+  constructor(private readonly db: PalmWalletDatabase) {}
 
   async insert(row: InsertArgs): Promise<void> {
     this.db

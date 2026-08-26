@@ -1,8 +1,8 @@
 {
-  "name": "palmpay",
+  "name": "palm-wallet",
   "private": true,
   "version": "0.1.0",
-  "description": "PalmPay — PROTOTYPE palm-biometric payment system for Egypt. Simulated wallet + simulated biometrics; not production software.",
+  "description": "Palm Wallet — PROTOTYPE palm-biometric payment system for Egypt. Simulated wallet + simulated biometrics; not production software.",
   "type": "module",
   "workspaces": [
     "packages/*",
@@ -15,8 +15,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && for d in apps/*/; do [ -f \"$d/tsconfig.json\" ] && tsc --noEmit -p \"$d\" || true; done",
     "build": "npm run typecheck",
     "test": "vitest run",
-    "dev": "concurrently -n api,cust,pos -c blue,green,magenta \"DATABASE_PATH=$PWD/data/palma.db npm run dev -w @palma/api\" \"npm run dev -w @palma/customer\" \"npm run dev -w @palma/merchant\"",
-    "dev:api": "DATABASE_PATH=$PWD/data/palma.db npm run dev -w @palma/api",
+    "dev": "concurrently -n api,cust,pos -c blue,green,magenta \"DATABASE_PATH=$PWD/data/palm-wallet.db npm run dev -w @palmwallet/api\" \"npm run dev -w @palmwallet/customer\" \"npm run dev -w @palmwallet/merchant\"",
+    "dev:api": "DATABASE_PATH=$PWD/data/palm-wallet.db npm run dev -w @palmwallet/api",
     "seed": "tsx apps/cli/src/seed.ts",
     "smoke": "tsx apps/cli/src/smoke.ts",
     "e2e": "tsx apps/cli/src/e2e.ts",

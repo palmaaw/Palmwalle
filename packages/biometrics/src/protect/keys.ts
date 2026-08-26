@@ -20,7 +20,7 @@ export const PURPOSE_PROTECTION = 'template-protection-v1';
 export const PURPOSE_STORAGE = 'template-storage-sealing-v1';
 
 /** Fixed non-secret salt; domain separation comes from the info label. */
-const HKDF_SALT = encoder.encode('palma-hkdf-salt-v1');
+const HKDF_SALT = encoder.encode('palm-wallet-hkdf-salt-v1');
 
 /** Derive an independent 32-byte subkey for one purpose from the master key. */
 export async function derivePurposeKey(masterKey: Uint8Array, purpose: string): Promise<Uint8Array> {
@@ -37,7 +37,7 @@ export async function derivePurposeKey(masterKey: Uint8Array, purpose: string): 
       name: 'HKDF',
       hash: 'SHA-256',
       salt: HKDF_SALT.slice().buffer as ArrayBuffer,
-      info: encoder.encode(`palma:${purpose}`).buffer as ArrayBuffer
+      info: encoder.encode(`palm-wallet:${purpose}`).buffer as ArrayBuffer
     },
     base,
     256
