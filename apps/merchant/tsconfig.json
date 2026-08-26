@@ -1,14 +1,14 @@
 {
+  // paths are resolved relative to this file (baseUrl removed — deprecated in TS 7)
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
-    "baseUrl": "../..",
     "paths": {
-      "@palmwallet/shared": ["packages/shared/src/index.ts"],
-      "@palmwallet/biometrics": ["packages/biometrics/src/index.ts"]
+      "@palmwallet/shared": ["../../packages/shared/src/index.ts"],
+      "@palmwallet/biometrics": ["../../packages/biometrics/src/index.ts"]
     }
   },
   "include": [

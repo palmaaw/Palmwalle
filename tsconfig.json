@@ -3,11 +3,10 @@
   "compilerOptions": {
     "noEmit": true,
     "types": ["node"],
-    "baseUrl": ".",
     "paths": {
-      "@palmwallet/shared": ["packages/shared/src/index.ts"],
-      "@palmwallet/biometrics": ["packages/biometrics/src/index.ts"],
-      "@palmwallet/db": ["packages/db/src/index.ts"]
+      "@palmwallet/shared": ["./packages/shared/src/index.ts"],
+      "@palmwallet/biometrics": ["./packages/biometrics/src/index.ts"],
+      "@palmwallet/db": ["./packages/db/src/index.ts"]
     }
   },
   "include": [
