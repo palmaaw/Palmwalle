@@ -45,7 +45,7 @@ export const MIN_DEPOSIT_PIASTERS = 500; // EGP 5.00
 export const MAX_DEPOSIT_PIASTERS = 10_000_00; // EGP 10,000.00
 
 /** Frames averaged into one enrollment descriptor. */
-export const ENROLL_FRAMES_REQUIRED = 7;
+export const ENROLL_FRAMES_REQUIRED = 8;
 /** Frames averaged into a verification probe (POS scan / self-test). */
 export const PROBE_FRAMES_REQUIRED = 5;
 

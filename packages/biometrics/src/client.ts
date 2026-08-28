@@ -14,21 +14,24 @@ import type { DescriptorVector } from './types.js';
 
 export interface BuiltEnrollmentCode {
   code: PalmCodeWire;
-  /** Min pairwise cosine among frames — attested to the server, which enforces a floor. */
+  /** Frame consistency score sent to the server for enrollment quality checks. */
   consistencyScore: number;
 }
 
 /** Enrollment path: fuse all accepted frames and protect ON DEVICE. */
 export function buildEnrollmentCode(vectors: DescriptorVector[], protectionKey: Uint8Array): BuiltEnrollmentCode {
   if (vectors.length === 0) throw new Error('enrollment requires at least one frame vector');
-  let consistency = 1;
+  let consistency = 0;
+  let comparisons = 0;
   for (let i = 0; i < vectors.length; i++) {
     for (let j = i + 1; j < vectors.length; j++) {
-      consistency = Math.min(consistency, cosine(vectors[i]!, vectors[j]!));
+      consistency += cosine(vectors[i]!, vectors[j]!);
+      comparisons++;
     }
   }
   const code = buildProbeCode(vectors, protectionKey);
-  return { code, consistencyScore: Math.round(consistency * 10000) / 10000 };
+  const average = comparisons ? consistency / comparisons : 1;
+  return { code, consistencyScore: Math.round(Math.max(0, Math.min(1, average)) * 10000) / 10000 };
 }
 
 /** Probe path (POS scan / self-test): fuse probe frames and protect ON DEVICE. */

@@ -18,8 +18,12 @@ export function Home(): JSX.Element {
   const [wallet, setWallet] = useState<WalletDTO | null>(null);
   const [recent, setRecent] = useState<TransactionDTO[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
       const [w, t] = await Promise.all([api.wallet(), api.transactions(undefined, 3)]);
       setWallet(w.wallet);
@@ -28,8 +32,12 @@ export function Home(): JSX.Element {
         const s = await api.palmStatus();
         setCustomer({ ...customer, palmEnrolled: s.enrolled });
       }
-    } catch {
-      /* transient — screens show last-known data */
+    } catch (err) {
+      // Keep the signed-in shell usable when the API is temporarily unavailable
+      // and tell the user exactly how to recover instead of showing a blank page.
+      setLoadError(err instanceof ApiError ? err.message : 'Could not load your wallet');
+    } finally {
+      setLoading(false);
     }
   }, [customer, setCustomer]);
 
@@ -46,9 +54,17 @@ export function Home(): JSX.Element {
 
       <div className="balance-card">
         <span className="muted">Available balance</span>
-        <strong className="balance">{wallet ? wallet.formatted ?? formatEGP(wallet.balancePiasters) : '…'}</strong>
+        <strong className="balance">{wallet ? wallet.formatted ?? formatEGP(wallet.balancePiasters) : loading ? '…' : '—'}</strong>
         <span className="sim-badge">SIMULATED WALLET</span>
       </div>
+
+      {loadError ? (
+        <div className="callout warn load-error" role="alert">
+          <strong>Wallet data unavailable</strong>
+          <span>{loadError}</span>
+          <button className="ghost" onClick={() => void reload()}>Try again</button>
+        </div>
+      ) : null}
 
       {!customer?.palmEnrolled ? (
         <Link to="/enroll/intro" className="callout action">

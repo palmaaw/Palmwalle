@@ -54,7 +54,8 @@ async function req<T>(method: 'GET' | 'POST' | 'DELETE', path: string, body?: un
 export interface CustomerDTO {
   id: string;
   name: string;
-  phone: string;
+  /** Raw phone numbers are intentionally omitted by the API. */
+  phone?: string;
   maskedPhone?: string;
   palmEnrolled?: boolean;
   status?: string;
@@ -127,7 +128,9 @@ export const api = {
     req<{ enrolled: boolean; templateId: string; consistencyScore: number }>('POST', '/customers/me/palm/enroll', {
       code,
       quality,
-      consistencyScore,
+      // Keep malformed camera math from producing a schema-level 400. The
+      // server still applies the real consistency floor after parsing.
+      consistencyScore: Number.isFinite(consistencyScore) ? Math.max(0, Math.min(1, consistencyScore)) : 0,
       capture: { source, frames }
     }),
 

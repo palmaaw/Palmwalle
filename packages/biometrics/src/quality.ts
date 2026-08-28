@@ -34,10 +34,10 @@ export function assessQuality(img: GrayImage, presence?: PalmPresence): QualityR
   const sharpness = clamp01(meanAbsGrad / 0.1);
 
   const hints: QualityHint[] = [];
-  if (mean < 0.06) hints.push('too_dark');
-  else if (mean > 0.92) hints.push('too_bright');
-  if (std < 0.025) hints.push('low_contrast');
-  if (meanAbsGrad < 0.02) hints.push('too_blurry');
+  if (mean < 0.12) hints.push('too_dark');
+  else if (mean > 0.88) hints.push('too_bright');
+  if (std < 0.018) hints.push('low_contrast');
+  if (meanAbsGrad < 0.018) hints.push('too_blurry');
   if (presence && !presence.present) hints.push('center_palm');
   else if (presence && !presence.centered) hints.push('center_palm');
   if (hints.length === 0) hints.push('ok');

@@ -18,7 +18,7 @@ export function Settings(): JSX.Element {
 
       <div className="card profile">
         <strong>{customer?.name}</strong>
-        <span className="muted">{customer?.phone}</span>
+        <span className="muted">{customer?.maskedPhone}</span>
       </div>
 
       <section>
@@ -31,6 +31,7 @@ export function Settings(): JSX.Element {
         <Link to="/enroll/intro" className="primary as-button">
           {customer?.palmEnrolled ? 'Re-enroll palm' : 'Enroll palm'}
         </Link>
+        {customer?.palmEnrolled ? <Link to="/enroll/success" className="ghost as-button">Test my palm</Link> : null}
         {customer?.palmEnrolled ? <DeletePalm onDeleted={() => void signOutSoft()} /> : null}
       </section>
 
