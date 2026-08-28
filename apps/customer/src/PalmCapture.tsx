@@ -6,11 +6,11 @@
  *  - 'camera':    getUserMedia → hidden canvas → rgbaToGray
  *  - 'synthetic': dev-only procedural palm generator (no camera needed)
  *
- * Frames are gated by GEOMETRY (detectPalmRgba: a palm-sized skin blob is in
- * frame and roughly centered) and PHOTOMETRY (assessQuality) before the
- * shutter unlocks. The user takes each frame manually, following a per-pose
- * guide so the enrollment covers several hand angles. Only extracted vectors
- * are handed up — raw pixels never leave this component.
+ * Frames are gated by PHOTOMETRY (assessQuality) before the shutter unlocks.
+ * Skin segmentation remains a best-effort hint only because camera white
+ * balance and lighting vary widely. The user takes each frame manually,
+ * following a per-pose guide so enrollment covers several hand angles. Only
+ * extracted vectors are handed up — raw pixels never leave this component.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -23,10 +23,12 @@ import {
   SyntheticCaptureSource,
   demoSeed
 } from '@palmwallet/biometrics';
+import { cosine } from '@palmwallet/biometrics';
 import type { DescriptorVector, GrayImage, PalmPresence } from '@palmwallet/biometrics';
 import type { QualityHint, QualityReportDTO } from '@palmwallet/shared';
 
 export type CaptureMode = 'camera' | 'synthetic';
+export type HandSide = 'left' | 'right';
 
 const TICK_MS = 120;
 /** Shutter stays locked until the frame has been continuously ready this long. */
@@ -44,6 +46,7 @@ export interface CaptureResult {
 
 interface Props {
   mode: CaptureMode;
+  hand?: HandSide;
   /** Synthetic identity seed (camera mode ignores it). */
   demoSlug: string;
   required: number;
@@ -68,15 +71,27 @@ const POSE_GUIDES = [
   'Flat, fingers together, inside the outline',
   'Tilt your palm slightly to the left',
   'Tilt your palm slightly to the right',
-  'Move a little closer — fill the outline',
+  'Move closer — show the center of your palm, keeping fingertips out of frame',
   'Pull back a little',
-  'Rock your hand ~15° clockwise',
-  'Rock your hand ~15° counter-clockwise'
+  'Turn your palm slightly right (like turning a doorknob)',
+  'Turn your palm slightly left (back to center)',
+  'Close-up: show the center of your palm, with fingertips out of frame'
+];
+
+const POSE_TRANSFORMS = [
+  'translate(0 0) scale(1)',
+  'translate(-7 1) scale(1.04)',
+  'translate(7 1) scale(1.04)',
+  'translate(0 2) scale(1.22)',
+  'translate(0 -2) scale(.78)',
+  'translate(3 0) rotate(14 50 55)',
+  'translate(-3 0) rotate(-14 50 55)',
+  'translate(0 2) scale(1.35)'
 ];
 
 type Status = 'starting' | 'error' | 'no-palm' | 'adjust' | 'ready' | 'captured';
 
-export function PalmCapture({ mode, demoSlug, required, title, subtitle, onComplete, onCancel }: Props): JSX.Element {
+export function PalmCapture({ mode, hand = 'right', demoSlug, required, title, subtitle, onComplete, onCancel }: Props): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
   const workRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
@@ -84,6 +99,7 @@ export function PalmCapture({ mode, demoSlug, required, title, subtitle, onCompl
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<number | null>(null);
   const vectorsRef = useRef<DescriptorVector[]>([]);
+  const presenceRef = useRef<PalmPresence[]>([]);
   // Latest analyzed frame + verdict, kept for the shutter to consume.
   const lastFrameRef = useRef<{ gray: GrayImage; presence: PalmPresence } | null>(null);
   const readySinceRef = useRef<number | null>(null);
@@ -114,7 +130,7 @@ export function PalmCapture({ mode, demoSlug, required, title, subtitle, onCompl
       }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 640 } },
+          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
           audio: false
         });
         if (cancelled) {
@@ -157,16 +173,15 @@ export function PalmCapture({ mode, demoSlug, required, title, subtitle, onCompl
       const frame = grabFrame();
       if (!frame) return;
 
-      const q = assessQuality(frame.gray, frame.presence);
+      // Geometry is guidance only: skin segmentation varies by camera and
+      // lighting. Photometric quality is the reliable shutter gate.
+      const q = assessQuality(frame.gray);
       lastFrameRef.current = frame;
       setScore(q.score);
       setQualityOk(q.hints.every((h) => h !== 'too_dark' && h !== 'too_bright' && h !== 'low_contrast' && h !== 'too_blurry'));
       setHint(q.hints[0] ?? 'ok');
 
-      if (!frame.presence.present) {
-        readySinceRef.current = null;
-        setStatus('no-palm');
-      } else if (!q.usable) {
+      if (!q.usable) {
         readySinceRef.current = null;
         setStatus('adjust');
       } else {
@@ -215,17 +230,30 @@ export function PalmCapture({ mode, demoSlug, required, title, subtitle, onCompl
     if (finishedRef.current || status !== 'ready') return;
     const frame = grabFrame();
     if (!frame) return;
-    const q = assessQuality(frame.gray, frame.presence);
+    const q = assessQuality(frame.gray);
     if (!q.usable) {
       setStatus('adjust');
       setHint(q.hints[0] ?? 'center_palm');
       return;
     }
     vectorsRef.current.push(extractFromGray(frame.gray, frame.presence).vector);
+    presenceRef.current.push(frame.presence);
     const done = vectorsRef.current.length;
     setDone(done);
     setScore(q.score);
     if (done >= required) {
+      let minConsistency = 1;
+      for (let i = 0; i < vectorsRef.current.length; i++) {
+        for (let j = i + 1; j < vectorsRef.current.length; j++) minConsistency = Math.min(minConsistency, cosine(vectorsRef.current[i]!, vectorsRef.current[j]!));
+      }
+      if (minConsistency < 0.25) {
+        setError('These photos look like different palms. Please enroll one hand again.');
+        vectorsRef.current = [];
+        presenceRef.current = [];
+        setDone(0);
+        setStatus('error');
+        return;
+      }
       finishedRef.current = true;
       if (timerRef.current !== null) window.clearInterval(timerRef.current);
       onComplete({ vectors: vectorsRef.current.splice(0), quality: q, mode });
@@ -244,7 +272,11 @@ export function PalmCapture({ mode, demoSlug, required, title, subtitle, onCompl
       ? 'Got it — now try the next angle'
       : status === 'ready'
         ? 'Hold steady — tap the shutter'
-        : status === 'no-palm'
+        : hint === 'too_dark'
+          ? 'Too dark — move to a brighter place'
+          : hint === 'too_bright'
+            ? 'Too bright — move away from direct light'
+            : status === 'no-palm'
           ? 'Show your palm to the camera'
           : HINT_COPY[hint] ?? 'Adjust your palm';
 
@@ -267,9 +299,10 @@ export function PalmCapture({ mode, demoSlug, required, title, subtitle, onCompl
           <canvas ref={previewRef} width={128} height={128} className="synth-preview" />
         )}
         <svg viewBox="0 0 100 100" className="overlay" aria-hidden>
+          <g className={poseIdx === 7 ? 'full-hand-guide hidden' : 'full-hand-guide'} transform={`${hand === 'right' ? 'translate(100 0) scale(-1 1) ' : ''}${POSE_TRANSFORMS[poseIdx]}`}>
           {/* palm outline guide */}
           <path
-            d="M43 99 C40 92 34 88 30 80 C27.5 74 26.5 66 27.5 59 C24 56 18 47 15 41 C12 35 14 29 19 31 C23 33 28 40 32 45 C33 47 34 47 34 44 C32 40 31 26 32 20 C32.5 15 39 15 39.5 20 C40 30 40 40 40.5 45 C41 38 41.5 18 44 13 C45 8.5 52 8.5 53 13 C54 22 53.5 38 53 45 C53.5 36 55 20 56.5 16 C58 11.5 63.5 12 64 16.5 C64.5 26 63.5 38 63 45 C63.5 38 65 32 66.5 30 C68 26.5 73.5 27.5 73.5 31.5 C74 38 72.5 44 71.5 47 C72.5 56 72 68 69.5 78 C67.5 86 64 92 62 98 L43 99 Z"
+            d="M42 98 C39 91 33 87 30 80 C27 75 28 69 31 64 C25 65 19 63 15 59 C10 54 10 48 14 45 C18 42 23 45 28 49 L35 55 C36 56 37 55 36 52 L33 21 C32.5 16 35.5 13 39 13 C42 13 43.5 16 43.5 20 L44 42 C44 44 45 44 45 41 L46 13 C46 8 49 6 52 7 C55 8 56 11 55.5 15 L55 42 C55 44 56 44 56.5 41 L59 18 C59.5 13 62 11 65 12 C68 13 69 16 68.5 20 L67 43 C67 45 68 45 69 43 L72 31 C73 27 76 26 79 28 C82 30 82 33 81 37 L77 53 C77 63 75 73 71 81 C68 88 64 93 62 98 Z"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.3"
@@ -277,24 +310,27 @@ export function PalmCapture({ mode, demoSlug, required, title, subtitle, onCompl
             strokeLinejoin="round"
           />
           {/* thumb webbing guide */}
-          <path d="M32 45 C35 49 39 50 43 50" fill="none" stroke="currentColor" strokeWidth="0.7" strokeDasharray="1.5 2" opacity="0.6" />
+          <path d="M31 64 C35 61 39 58 43 56" fill="none" stroke="currentColor" strokeWidth="0.7" strokeDasharray="1.5 2" opacity="0.6" />
+          </g>
+          {poseIdx === 7 ? <ellipse cx="50" cy="58" rx="25" ry="34" fill="none" stroke="currentColor" strokeWidth="1.3" strokeDasharray="3 3" /> : null}
           <path d="M6 6 L18 6 M6 6 L6 18" strokeWidth="1.6" stroke="currentColor" fill="none" strokeLinecap="round" />
           <path d="M94 6 L82 6 M94 6 L94 18" strokeWidth="1.6" stroke="currentColor" fill="none" strokeLinecap="round" />
           <path d="M6 94 L18 94 M6 94 L6 82" strokeWidth="1.6" stroke="currentColor" fill="none" strokeLinecap="round" />
           <path d="M94 94 L82 94 M94 94 L94 82" strokeWidth="1.6" stroke="currentColor" fill="none" strokeLinecap="round" />
         </svg>
+        <span className="hand-label">{hand === 'left' ? 'LEFT' : 'RIGHT'} HAND</span>
       </div>
 
       {error ? (
-        <div className="callout warn">{error}</div>
+        <div className="callout warn"><span>{error}</span><button className="ghost" onClick={() => { setError(null); setStatus('no-palm'); }}>Retake enrollment</button></div>
       ) : status === 'starting' ? (
         <div className="muted center">Starting {mode === 'camera' ? 'camera' : 'demo palm'}…</div>
       ) : (
         <>
           <div className="pose-card">
             <strong>{statusLine}</strong>
-            <span className="muted small">
-              Frame {Math.min(done + 1, required)} of {required} · {POSE_GUIDES[poseIdx]}
+              <span className="muted small">
+              Frame {Math.min(done + 1, required)} of {required} · {hand === 'left' ? 'Left' : 'Right'} hand · {POSE_GUIDES[poseIdx]}
             </span>
           </div>
 
@@ -316,7 +352,7 @@ export function PalmCapture({ mode, demoSlug, required, title, subtitle, onCompl
           </div>
 
           <div className="capture-meta">
-            <strong>{mode === 'camera' ? '🖐 Palm detected' : '✨ Demo palm'}</strong>
+            <strong>{mode === 'camera' ? (status === 'ready' || status === 'captured' ? '🖐 Palm detected' : '⌛ Waiting for palm') : '✨ Demo palm'}</strong>
             <span className="muted">
               light/focus {qualityOk ? '✓' : '✗'} · detail {(score * 100).toFixed(0)}%
             </span>

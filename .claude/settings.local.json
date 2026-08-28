@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx vitest *)",
+      "Bash(cat)",
+      "Bash(npx tsx *)",
+      "Bash(npm run *)",
+      "Bash(echo \"exit=$? \\(1 = no errors found = good\\)\")",
+      "Bash(sed *)",
+      "Bash(npx tsc *)",
+      "Bash(cd *)",
+      "Bash(npm test *)",
+      "Bash(node *)",
+      "Bash(awk '{print $2, $11, $12, $13}')",
+      "Bash(kill 405396 405397 405398 405399 405416 412912 412913)",
+      "Bash(sleep *)",
+      "Bash(pkill -f \"tsx watch src/main.ts\")",
+      "Bash(pkill -f \"vite --host\")",
+      "Bash(echo *)",
+      "Bash(python3 -c ' *)",
+      "Bash(npm ls *)",
+      "Bash(awk '{print $2, $11, $12, $13, $14}')",
+      "Bash(grep -o \"rolldown[^\\\\\"'\\\\`;]*\" apps/customer/node_modules/vite/dist/node/chunks/chunk.js)",
+      "Bash(git -C /workspaces/Palma- status --short)",
+      "Bash(git -C /workspaces/Palma- remote -v)",
+      "Bash(git rm *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(DATABASE_PATH=/tmp/palma-noseed-test.db npx tsx *)",
+      "Bash(git -C /workspaces/Palma- diff --stat)"
+    ]
+  }
+}

@@ -66,7 +66,8 @@ export interface TransactionDTO {
   ref: string;
   type: 'deposit' | 'payment' | 'refund';
   status: string;
-  amountPiasters: number;
+  /** Legacy field is optional; current API uses signedAmountPiasters. */
+  amountPiasters?: number;
   signedAmountPiasters?: number;
   counterparty: { displayName: string; maskedPhone: string } | null;
   parentRef: string | null;

@@ -53,7 +53,7 @@ export function History(): JSX.Element {
               </span>
               <span className={t.type === 'refund' ? 'amount minus' : 'amount plus'}>
                 {(t.signedAmountPiasters ?? 0) >= 0 ? '+' : '−'}{' '}
-                {formatEGP(Math.abs(t.signedAmountPiasters ?? t.amountPiasters))}
+                {formatEGP(Math.abs(t.signedAmountPiasters ?? t.amountPiasters ?? 0))}
               </span>
               {t.type === 'payment' && t.status === 'completed' ? (
                 <button className="linklike" onClick={() => setRefunding(t)}>
@@ -76,7 +76,7 @@ export function History(): JSX.Element {
           txn={refunding}
           onClose={() => setRefunding(null)}
           onDone={() => {
-            setNotice({ good: true, text: `Refunded ${formatEGP(refunding.amountPiasters)}` });
+            setNotice({ good: true, text: `Refunded ${formatEGP(refunding.amountPiasters ?? 0)}` });
             void load(false);
           }}
           onFail={(msg) => setNotice({ good: false, text: msg })}
@@ -115,7 +115,7 @@ function ConfirmRefund({
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <h3>Refund {formatEGP(txn.amountPiasters)}?</h3>
+        <h3>Refund {formatEGP(txn.amountPiasters ?? txn.signedAmountPiasters ?? 0)}?</h3>
         <p className="muted small">
           Returns the full amount to {txn.counterparty?.displayName ?? 'the customer'} — payments refund once, in full.
         </p>

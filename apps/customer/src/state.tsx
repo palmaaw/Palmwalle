@@ -28,7 +28,7 @@ interface Session {
   /** True while a stored token's session is still being restored on load —
    *  routers must not treat "customer === null" as signed-out during this. */
   booting: boolean;
-  signIn(token: string, customer: CustomerDTO): void;
+  signIn(token: string, customer: CustomerDTO, phone?: string): void;
   setCustomer(customer: CustomerDTO): void;
   signOut(): void;
   refresh(): Promise<void>;
@@ -38,6 +38,7 @@ const Ctx = createContext<Session | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }): JSX.Element {
   const [customer, setCustomerState] = useState<CustomerDTO | null>(null);
+  const [demoSlug, setDemoSlug] = useState<string>(() => localStorage.getItem('palmwallet.demoSlug') ?? '');
   const [protectionKey, setProtectionKey] = useState<Uint8Array | null>(null);
   // Lazily initialized so a stored token never renders as "signed out" first.
   const [booting, setBooting] = useState<boolean>(() => !!localStorage.getItem('palmwallet.token'));
@@ -56,6 +57,7 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
       .me()
       .then((d) => {
         setCustomerState(d.customer);
+        setDemoSlug((current) => current || slugForPhone(d.customer.phone ?? d.customer.id));
         loadProtectionKey();
       })
       .catch(() => setToken(null))
@@ -63,17 +65,16 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
   }, [loadProtectionKey]);
 
   const signIn = useCallback(
-    (token: string, c: CustomerDTO) => {
+    (token: string, c: CustomerDTO, phone?: string) => {
       setToken(token);
       setCustomerState(c);
+      const slug = slugForPhone(phone ?? c.phone ?? c.id);
+      setDemoSlug(slug);
+      localStorage.setItem('palmwallet.demoSlug', slug);
       loadProtectionKey();
     },
     [loadProtectionKey]
   );
-
-  // Synthetic identity follows the session — any registered customer can
-  // enroll; nothing to cache, so it can never go stale or vanish in a new tab.
-  const demoSlug = customer ? slugForPhone(customer.phone) : '';
 
   const value = useMemo<Session>(
     () => ({
@@ -86,6 +87,8 @@ export function SessionProvider({ children }: { children: ReactNode }): JSX.Elem
       signOut: () => {
         setToken(null);
         setCustomerState(null);
+        setDemoSlug('');
+        localStorage.removeItem('palmwallet.demoSlug');
         setProtectionKey(null);
       },
       refresh: async () => {
@@ -111,6 +114,15 @@ export function useSession(): Session {
 }
 
 /** Egyptian numbers → stable synthetic-identity slug (+201001234567 → p201001234567). */
-export function slugForPhone(phone: string): string {
-  return 'p' + phone.replace(/[^0-9]/g, '');
+export function slugForPhone(phone: string | undefined): string {
+  const value = typeof phone === 'string' ? phone : '';
+  const digits = value.replace(/[^0-9]/g, '');
+  // Keep the seeded demo palms compatible with the merchant's simulated
+  // reader. Other accounts get a deterministic private slug of their own.
+  const seeded: Record<string, string> = {
+    '201000000001': 'aya',
+    '201000000002': 'omar',
+    '201000000003': 'nour'
+  };
+  return seeded[digits] ?? `p${digits}`;
 }

@@ -13,16 +13,18 @@ import {
   demoSeed,
   extractFromGray
 } from '@palmwallet/biometrics';
-import { ENROLL_FRAMES_REQUIRED } from '@palmwallet/shared';
+import { ENROLL_FRAMES_REQUIRED, PROBE_FRAMES_REQUIRED } from '@palmwallet/shared';
 
 import { api, ApiError } from '../api.js';
 import { PalmCapture } from '../PalmCapture.js';
+import type { HandSide } from '../PalmCapture.js';
 import type { CaptureMode, CaptureResult } from '../PalmCapture.js';
 import { useSession } from '../state.js';
 
 export function EnrollIntro(): JSX.Element {
   const navigate = useNavigate();
   const [mode, setMode] = useState<CaptureMode | null>(null);
+  const [hand, setHand] = useState<HandSide>(() => (localStorage.getItem('palmwallet.hand') as HandSide) || 'right');
   const cameraAvailable = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
   return (
@@ -32,6 +34,12 @@ export function EnrollIntro(): JSX.Element {
       </button>
       <h2>Enroll your palm</h2>
 
+      <fieldset className="hand-choice">
+        <legend>Which hand will you use?</legend>
+        <button type="button" className={hand === 'left' ? 'selected' : ''} onClick={() => setHand('left')}>Left hand</button>
+        <button type="button" className={hand === 'right' ? 'selected' : ''} onClick={() => setHand('right')}>Right hand</button>
+      </fieldset>
+
       <div className="card">
         <p>
           Your palm becomes your payment pass. We look at the pattern of lines and texture and compute a{' '}
@@ -39,11 +47,10 @@ export function EnrollIntro(): JSX.Element {
         </p>
         <ul className="ticks">
           <li>📸 Images never leave your device</li>
-          <li>🧮 This device turns them into an irreversible code before anything is sent</li>
-          <li>🔐 Only that code is ever transmitted or stored — sealed with AES-256-GCM</li>
-          <li>🖐️ Hold your palm ~20 cm away — we'll guide you through {ENROLL_FRAMES_REQUIRED} angles</li>
-          <li>⏸️ You press the shutter for each frame, once your palm is detected</li>
-          <li>🔁 You can delete or re-enroll any time in Settings</li>
+          <li>🧮 This device turns them into a mathematically irreversible hash</li>
+          <li>🖐️ Hold your palm about 20 cm away — we’ll guide you through {ENROLL_FRAMES_REQUIRED} angles</li>
+          <li>⏸️ Press the shutter for each frame when your palm is inside the outline</li>
+          <li>🔁 You can re-enroll any time in Settings</li>
         </ul>
       </div>
 
@@ -63,12 +70,12 @@ export function EnrollIntro(): JSX.Element {
         </button>
       ) : null}
 
-      {mode ? <EnrollCapture mode={mode} /> : null}
+      {mode ? <EnrollCapture mode={mode} hand={hand} /> : null}
     </div>
   );
 }
 
-function EnrollCapture({ mode }: { mode: CaptureMode }): JSX.Element {
+function EnrollCapture({ mode, hand }: { mode: CaptureMode; hand: HandSide }): JSX.Element {
   const navigate = useNavigate();
   const { demoSlug, protectionKey } = useSession();
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +96,7 @@ function EnrollCapture({ mode }: { mode: CaptureMode }): JSX.Element {
         ENROLL_FRAMES_REQUIRED,
         mode === 'synthetic' ? 'synthetic' : 'camera'
       );
+      localStorage.setItem('palmwallet.hand', hand);
       navigate('/enroll/success', { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Enrollment failed');
@@ -107,6 +115,7 @@ function EnrollCapture({ mode }: { mode: CaptureMode }): JSX.Element {
       ) : (
         <PalmCapture
           mode={mode}
+          hand={hand}
           demoSlug={demoSlug}
           required={ENROLL_FRAMES_REQUIRED}
           title="Capture your palm"
@@ -124,8 +133,11 @@ export function EnrollSuccess(): JSX.Element {
   const { demoSlug, protectionKey, setCustomer, customer } = useSession();
   const [selfTest, setSelfTest] = useState<{ decision: string; score: number; threshold: number } | null>(null);
   const [testing, setTesting] = useState(false);
+  const [cameraTest, setCameraTest] = useState(false);
+  const [hand, setHand] = useState<HandSide>(() => (localStorage.getItem('palmwallet.hand') as HandSide) || 'right');
+  const cameraAvailable = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
-  async function runSelfTest(): Promise<void> {
+  async function runSelfTest(vectors?: CaptureResult['vectors']): Promise<void> {
     if (!protectionKey) {
       setSelfTest({ decision: 'error: secure capture not ready — retry', score: 0, threshold: 0 });
       return;
@@ -135,10 +147,7 @@ export function EnrollSuccess(): JSX.Element {
       // Fresh probe frames (separate from the enrollment capture), fused and
       // protected on-device, verified 1:1 against the template just created.
       const src = new SyntheticCaptureSource(demoSeed(demoSlug), { size: 128 });
-      const code = buildProbeCode(
-        src.captureProbeFrames().map((f) => extractFromGray(f).vector),
-        protectionKey
-      );
+      const code = buildProbeCode(vectors ?? src.captureProbeFrames().map((f) => extractFromGray(f).vector), protectionKey);
       const d = await api.selfTest({
         code,
         quality: DEMO_PROBE_QUALITY
@@ -149,6 +158,7 @@ export function EnrollSuccess(): JSX.Element {
       setSelfTest({ decision: `error: ${err instanceof ApiError ? err.message : 'failed'}`, score: 0, threshold: 0 });
     } finally {
       setTesting(false);
+      setCameraTest(false);
     }
   }
 
@@ -161,9 +171,22 @@ export function EnrollSuccess(): JSX.Element {
       <div className="card">
         <h3>Verify it works</h3>
         <p className="muted small">Run a live 1:1 check against your new template.</p>
-        <button className="primary" disabled={testing} onClick={() => void runSelfTest()}>
-          {testing ? 'Scanning…' : 'Run self-test'}
+        <button className="primary" disabled={testing} onClick={() => cameraAvailable ? setCameraTest(true) : void runSelfTest()}>
+          {testing ? 'Scanning…' : cameraAvailable ? 'Scan my palm' : 'Run self-test'}
         </button>
+        {cameraTest ? (
+          <PalmCapture
+            mode="camera"
+            hand={hand}
+            demoSlug={demoSlug}
+            required={PROBE_FRAMES_REQUIRED}
+            title="Verify your palm"
+            subtitle="Place your palm inside the outline for a quick check"
+            onComplete={(r) => { setCameraTest(false); setTesting(true); void runSelfTest(r.vectors); }}
+            onCancel={() => setCameraTest(false)}
+          />
+        ) : null}
+        {!cameraTest ? <div className="hand-choice compact"><span className="muted small">Test with:</span><button type="button" className={hand === 'left' ? 'selected' : ''} onClick={() => setHand('left')}>Left hand</button><button type="button" className={hand === 'right' ? 'selected' : ''} onClick={() => setHand('right')}>Right hand</button></div> : null}
         {selfTest ? (
           <SelfTestResult decision={selfTest.decision} score={selfTest.score} threshold={selfTest.threshold} />
         ) : null}

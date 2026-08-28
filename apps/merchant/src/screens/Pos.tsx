@@ -33,7 +33,7 @@ export function Pos(): JSX.Element {
       setToday(
         t.items
           .filter((x) => x.type === 'payment' && x.status === 'completed' && sameDay(x.createdAt))
-          .reduce((s, x) => s + x.amountPiasters, 0)
+          .reduce((s, x) => s + (x.signedAmountPiasters ?? x.amountPiasters ?? 0), 0)
       );
     } catch {
       /* keep last-known */
@@ -94,7 +94,7 @@ export function Pos(): JSX.Element {
                     <small className="muted">{new Date(t.createdAt).toLocaleTimeString('en-EG')} · {t.ref}</small>
                   </span>
                   <span className={t.type === 'refund' ? 'amount minus' : 'amount plus'}>
-                    {(t.signedAmountPiasters ?? 0) >= 0 ? '+' : '−'} {formatEGP(Math.abs(t.signedAmountPiasters ?? t.amountPiasters))}
+                    {(t.signedAmountPiasters ?? t.amountPiasters ?? 0) >= 0 ? '+' : '−'} {formatEGP(Math.abs(t.signedAmountPiasters ?? t.amountPiasters ?? 0))}
                   </span>
                 </div>
               </li>
@@ -125,11 +125,12 @@ function sameDay(iso: string): boolean {
 type Flow = 'keypad' | 'scan' | 'result';
 
 function ChargeFlow({ onClose, onDone }: { onClose(): void; onDone(): void }): JSX.Element {
-  const readPalm = usePalmReader();
   const [flow, setFlow] = useState<Flow>('keypad');
   const [digits, setDigits] = useState('');
   const [outcome, setOutcome] = useState<{ ok: boolean; heading: string; detail: string; ref?: string } | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [demoSlug, setDemoSlug] = useState<'aya' | 'omar' | 'nour' | null>(null);
+  const reader = usePalmReader(flow === 'scan');
 
   /** digits are whole pounds; piasters = ×100. */
   const piasters = Number(digits || '0') * 100;
@@ -142,12 +143,18 @@ function ChargeFlow({ onClose, onDone }: { onClose(): void; onDone(): void }): J
   }
 
   async function scan(): Promise<void> {
-    if (!readPalm) return; // reader not ready — button is disabled anyway
+    if (!reader) return;
     setScanning(true);
     // Simulated scanner latency for UX realism.
     await new Promise((r) => setTimeout(r, 550));
     try {
-      const r = await api.authorize(piasters, readPalm());
+      const probe = demoSlug ? reader.readDemo(demoSlug) : await reader.read();
+      if (!probe) {
+        setOutcome({ ok: false, heading: 'No palm detected', detail: 'Place the customer’s open palm inside the camera frame and try again.' });
+        setFlow('result');
+        return;
+      }
+      const r = await api.authorize(piasters, probe);
       if (r.kind === 'completed') {
         setOutcome({
           ok: true,
@@ -218,24 +225,29 @@ function ChargeFlow({ onClose, onDone }: { onClose(): void; onDone(): void }): J
           <>
             <div className="scan-amount">{display}</div>
             <div className={`scanner ${scanning ? 'busy' : ''}`}>
-              <div className="palm-glyph" aria-hidden>
-                🖐️
-              </div>
+              {reader?.cameraReady ? <><video ref={reader.videoRef} className="scanner-video" muted playsInline /><div className="scanner-guide">Place open palm here</div></> : <div className="palm-glyph" aria-hidden>🖐️</div>}
               {scanning ? <div className="scanline" /> : null}
             </div>
             <p className="muted center small">
-              {!readPalm
+              {!reader
                 ? 'Reader initialising…'
+                : reader.cameraReady
+                  ? scanning ? 'Matching this palm against enrolled customers…' : 'Hold the customer’s palm over the camera'
                 : scanning
                   ? 'Matching against enrolled customers…'
                   : 'Ask the customer to hold their palm over the reader'}
             </p>
             {!scanning ? (
               <>
-                <button className="primary big" disabled={!readPalm} onClick={() => void scan()}>
+                <button className="primary big" disabled={!reader || !reader.cameraReady} onClick={() => void scan()}>
                   🖐 Scan palm
                 </button>
                 <p className="muted center small">The till never sees names — the server identifies the palm itself.</p>
+                <div className="demo-reader" aria-label="Investor demo reader">
+                  <span className="muted small">Demo reader (for seeded accounts)</span>
+                  {(['aya', 'omar', 'nour'] as const).map((slug) => <button key={slug} className={demoSlug === slug ? 'selected' : ''} onClick={() => setDemoSlug(slug)}>{slug === 'aya' ? 'Aya' : slug === 'omar' ? 'Omar' : 'Nour'}</button>)}
+                  {demoSlug ? <button className="ghost" onClick={() => setDemoSlug(null)}>Use camera</button> : null}
+                </div>
                 <button className="ghost" onClick={() => setFlow('keypad')}>
                   ← Wrong amount
                 </button>

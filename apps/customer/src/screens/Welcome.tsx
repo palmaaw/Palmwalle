@@ -32,7 +32,7 @@ export function Welcome(): JSX.Element {
       try {
         setBusy(true);
         const d = await api.register(parsed.data.name, parsed.data.phone, parsed.data.password);
-        signIn(d.accessToken, d.customer);
+        signIn(d.accessToken, d.customer, parsed.data.phone);
         navigate('/enroll/intro', { replace: true });
       } catch (err) {
         setError(err instanceof ApiError ? err.message : 'Registration failed');
@@ -45,7 +45,7 @@ export function Welcome(): JSX.Element {
       try {
         setBusy(true);
         const d = await api.login(parsed.data.phone, parsed.data.password);
-        signIn(d.accessToken, d.customer);
+        signIn(d.accessToken, d.customer, parsed.data.phone);
         navigate(d.customer.palmEnrolled ? '/home' : '/enroll/intro', { replace: true });
       } catch (err) {
         setError(err instanceof ApiError ? err.message : 'Sign-in failed');
@@ -62,7 +62,7 @@ export function Welcome(): JSX.Element {
           ✋
         </div>
         <h1>
-          Palm<span>Wallet</span>
+          <span className="brand-palm">Palm</span><span>Wallet</span>
         </h1>
         <p className="tagline">Pay with a wave of your palm</p>
         <p className="prototype-banner">⚠️ SIMULATED PROTOTYPE — no real money, demo biometrics</p>
